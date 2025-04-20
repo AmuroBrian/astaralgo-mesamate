@@ -3,6 +3,7 @@ import numpy as np
 import heapq
 import matplotlib.pyplot as plt
 import time
+import serial
 
 # Global variables to store start and goal
 start = None
@@ -105,6 +106,9 @@ def get_directions(path):
     return directions
 
 def main():
+    ser = serial.Serial('/dev/ttyACM0', 9600)
+    time.sleep(2)
+
     image_path = "restaurant.png"
     binary_array = image_to_binary_array(image_path)
     select_start_goal(binary_array)
@@ -115,6 +119,11 @@ def main():
             directions = get_directions(path)
             print("Directions:", directions)
             draw_path(binary_array, path)
+            for dir in directions:
+                ser.write((dir+"\n").encode('utf-8'))
+                print(f"Sent: {dir}")
+                time.sleep(5)
+            ser.close();
         else:
             print("No path found.")
 
