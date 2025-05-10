@@ -1,4 +1,9 @@
-opencv-python>=4.8.0.76
-numpy>=1.26.0
-matplotlib>=3.8.0
-pyserial
+# Core dependencies
+numpy>=1.21.0
+opencv-python>=4.5.0
+matplotlib>=3.4.0
+Pillow>=8.0.0
+pyserial>=3.5
+
+# GUI dependencies
+tk>=0.1.0
