@@ -1007,7 +1007,7 @@ class MesamateApp:
                 # Wait for acknowledgment
                 time.sleep(0.5)
                 
-                # If there's a next path, turn on its LED (which will automatically turn off the previous one)
+                # If there's a next path, turn on its LED
                 next_path = path_number + 1
                 if next_path <= len(self.selected_tables):
                     command = f"PATH_START:{next_path}\n"
@@ -1015,6 +1015,14 @@ class MesamateApp:
                     self.serial_port.write(command.encode())
                     self.serial_port.flush()
                     print(f"Sent path start command for Path {next_path}")
+                    time.sleep(0.5)
+                elif path_number == 3:  # If this was the last path (Path 3)
+                    # Turn on all LEDs for Path 4
+                    command = "PATH_START:4\n"
+                    print("Sending path start command for Path 4 - Turning ON all LEDs")
+                    self.serial_port.write(command.encode())
+                    self.serial_port.flush()
+                    print("Sent path start command for Path 4")
                     time.sleep(0.5)
                 
             except Exception as e:
