@@ -165,7 +165,15 @@ void loop() {
       int pathNumber = inputString.substring(13).toInt();
       Serial.print("Processing food received for Path ");
       Serial.println(pathNumber);
+      
+      // Turn off the specific LED
       setPathLED(pathNumber, false);
+      
+      // Send acknowledgment
+      Serial.print("Path ");
+      Serial.print(pathNumber);
+      Serial.println(" LED deactivated");
+      Serial.flush();
     }
     else {
       processMovement(inputString);

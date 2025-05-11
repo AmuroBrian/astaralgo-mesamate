@@ -1005,9 +1005,21 @@ class MesamateApp:
                 # Find the path number for this table
                 path_number = self.selected_tables.index(table) + 1
                 command = f"FOOD_RECEIVED:{path_number}\n"
+                print(f"Sending food received command: {command.strip()}")
                 self.serial_port.write(command.encode())
                 self.serial_port.flush()
                 print(f"Sent food received command for Path {path_number}")
+                
+                # Wait for acknowledgment
+                time.sleep(0.5)
+                
+                # Verify LED state
+                if path_number == 1:
+                    print("Path 1 food received - LED on pin 10 should be OFF")
+                elif path_number == 2:
+                    print("Path 2 food received - LED on pin 11 should be OFF")
+                elif path_number == 3:
+                    print("Path 3 food received - LED on pin 12 should be OFF")
             except Exception as e:
                 print(f"Error sending food received command: {e}")
         
