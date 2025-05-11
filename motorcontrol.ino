@@ -116,42 +116,60 @@ void loop() {
     }
     // Check if it's a path completion command
     else if (inputString.startsWith("PATH_COMPLETE:")) {
-      int pathNumber = inputString.substring(13).toInt();
-      Serial.print("Path ");
-      Serial.print(pathNumber);
-      Serial.println(" completed - Turning ON LED");
+      // Extract path number after "PATH_COMPLETE:"
+      String pathStr = inputString.substring(13);
+      pathStr.trim();  // Remove any whitespace or newlines
+      int pathNumber = pathStr.toInt();
       
-      // Turn on the appropriate LED
-      switch(pathNumber) {
-        case 1:
-          digitalWrite(LED_PATH1, HIGH);  // Turn ON LED for Path 1
-          break;
-        case 2:
-          digitalWrite(LED_PATH2, HIGH);  // Turn ON LED for Path 2
-          break;
-        case 3:
-          digitalWrite(LED_PATH3, HIGH);  // Turn ON LED for Path 3
-          break;
+      if (pathNumber >= 1 && pathNumber <= 3) {  // Validate path number
+        Serial.print("Path ");
+        Serial.print(pathNumber);
+        Serial.println(" completed - Turning ON LED");
+        
+        // Turn on the appropriate LED
+        switch(pathNumber) {
+          case 1:
+            digitalWrite(LED_PATH1, HIGH);  // Turn ON LED for Path 1
+            break;
+          case 2:
+            digitalWrite(LED_PATH2, HIGH);  // Turn ON LED for Path 2
+            break;
+          case 3:
+            digitalWrite(LED_PATH3, HIGH);  // Turn ON LED for Path 3
+            break;
+        }
+      } else {
+        Serial.print("Invalid path number received: ");
+        Serial.println(pathNumber);
       }
     }
     // Check if it's a food received command
     else if (inputString.startsWith("FOOD_RECEIVED:")) {
-      int pathNumber = inputString.substring(13).toInt();
-      Serial.print("Food received for Path ");
-      Serial.print(pathNumber);
-      Serial.println(" - Turning OFF LED");
+      // Extract path number after "FOOD_RECEIVED:"
+      String pathStr = inputString.substring(13);
+      pathStr.trim();  // Remove any whitespace or newlines
+      int pathNumber = pathStr.toInt();
       
-      // Turn off the appropriate LED
-      switch(pathNumber) {
-        case 1:
-          digitalWrite(LED_PATH1, LOW);  // Turn OFF LED for Path 1
-          break;
-        case 2:
-          digitalWrite(LED_PATH2, LOW);  // Turn OFF LED for Path 2
-          break;
-        case 3:
-          digitalWrite(LED_PATH3, LOW);  // Turn OFF LED for Path 3
-          break;
+      if (pathNumber >= 1 && pathNumber <= 3) {  // Validate path number
+        Serial.print("Food received for Path ");
+        Serial.print(pathNumber);
+        Serial.println(" - Turning OFF LED");
+        
+        // Turn off the appropriate LED
+        switch(pathNumber) {
+          case 1:
+            digitalWrite(LED_PATH1, LOW);  // Turn OFF LED for Path 1
+            break;
+          case 2:
+            digitalWrite(LED_PATH2, LOW);  // Turn OFF LED for Path 2
+            break;
+          case 3:
+            digitalWrite(LED_PATH3, LOW);  // Turn OFF LED for Path 3
+            break;
+        }
+      } else {
+        Serial.print("Invalid path number received: ");
+        Serial.println(pathNumber);
       }
     }
     else {

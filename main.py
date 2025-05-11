@@ -163,12 +163,12 @@ class MesamateApp:
                 
             else:
                 # All directions for current path completed
-                print(f"\nPath {self.current_path_index + 1} completed: {current_path['description']}")
+                path_number = self.current_path_index + 1  # Add 1 to make it 1-based
+                print(f"\nPath {path_number} completed: {current_path['description']}")
                 
                 # Send path completion command to Arduino
                 if self.serial_port and self.serial_port.is_open:
                     try:
-                        path_number = self.current_path_index + 1
                         command = f"PATH_COMPLETE:{path_number}\n"
                         print(f"Sending path completion command: {command.strip()}")
                         self.serial_port.write(command.encode())
@@ -189,8 +189,11 @@ class MesamateApp:
                         print(f"Error sending path completion command: {e}")
                 
                 # Show food delivery confirmation for current table
-                current_table = self.selected_tables[self.current_path_index]
-                self.show_food_delivery_confirmation(current_table)
+                if self.current_path_index < len(self.selected_tables):
+                    current_table = self.selected_tables[self.current_path_index]
+                    self.show_food_delivery_confirmation(current_table)
+                else:
+                    print("Warning: No table selected for current path")
                 
                 self.current_path_index += 1
                 self.current_direction_index = 0
@@ -1003,7 +1006,7 @@ class MesamateApp:
         if self.serial_port and self.serial_port.is_open:
             try:
                 # Find the path number for this table
-                path_number = self.selected_tables.index(table) + 1
+                path_number = self.selected_tables.index(table) + 1  # Add 1 to make it 1-based
                 command = f"FOOD_RECEIVED:{path_number}\n"
                 print(f"Sending food received command: {command.strip()}")
                 self.serial_port.write(command.encode())
