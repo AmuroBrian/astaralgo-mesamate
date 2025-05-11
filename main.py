@@ -125,6 +125,18 @@ class MesamateApp:
             
             if not hasattr(self, 'current_direction_index'):
                 self.current_direction_index = 0
+                # Turn ON LED at the start of the path
+                path_number = self.current_path_index + 1
+                if self.serial_port and self.serial_port.is_open:
+                    try:
+                        command = f"PATH_START:{path_number}\n"
+                        print(f"Sending path start command: {command.strip()}")
+                        self.serial_port.write(command.encode())
+                        self.serial_port.flush()
+                        print(f"Sent path start command for Path {path_number}")
+                        time.sleep(0.5)
+                    except Exception as e:
+                        print(f"Error sending path start command: {e}")
                 
             if self.current_direction_index < len(current_path['directions']):
                 # Get current direction
@@ -163,36 +175,8 @@ class MesamateApp:
                 
             else:
                 # All directions for current path completed
-                path_number = self.current_path_index + 1  # Add 1 to make it 1-based
+                path_number = self.current_path_index + 1
                 print(f"\nPath {path_number} completed: {current_path['description']}")
-                
-                # Send path completion command to Arduino
-                if self.serial_port and self.serial_port.is_open:
-                    try:
-                        # Ensure path number is valid (1-4)
-                        if 1 <= path_number <= 4:
-                            command = f"PATH_COMPLETE:{path_number}\n"
-                            print(f"Sending path completion command: {command.strip()}")
-                            self.serial_port.write(command.encode())
-                            self.serial_port.flush()
-                            print(f"Sent path completion command for Path {path_number}")
-                            
-                            # Wait for acknowledgment
-                            time.sleep(0.5)
-                            
-                            # Verify LED state
-                            if path_number == 1:
-                                print("Path 1 completed - LED on pin 10 should be ON")
-                            elif path_number == 2:
-                                print("Path 2 completed - LED on pin 11 should be ON")
-                            elif path_number == 3:
-                                print("Path 3 completed - LED on pin 12 should be ON")
-                            elif path_number == 4:
-                                print("Path 4 completed - All LEDs should be OFF")
-                        else:
-                            print(f"Warning: Invalid path number {path_number} - must be between 1 and 4")
-                    except Exception as e:
-                        print(f"Error sending path completion command: {e}")
                 
                 # Show food delivery confirmation for current table
                 if self.current_path_index < len(self.selected_tables):
@@ -1008,11 +992,12 @@ class MesamateApp:
         no_btn.pack(side=tk.LEFT, padx=10)
 
     def handle_food_received(self, table, window):
-        # Send command to Arduino to turn off LED
+        # Send command to Arduino to turn off LED and turn on next LED
         if self.serial_port and self.serial_port.is_open:
             try:
                 # Find the path number for this table
-                path_number = self.selected_tables.index(table) + 1  # Add 1 to make it 1-based
+                path_number = self.selected_tables.index(table) + 1
+                # Turn off current LED
                 command = f"FOOD_RECEIVED:{path_number}\n"
                 print(f"Sending food received command: {command.strip()}")
                 self.serial_port.write(command.encode())
@@ -1022,15 +1007,18 @@ class MesamateApp:
                 # Wait for acknowledgment
                 time.sleep(0.5)
                 
-                # Verify LED state
-                if path_number == 1:
-                    print("Path 1 food received - LED on pin 10 should be OFF")
-                elif path_number == 2:
-                    print("Path 2 food received - LED on pin 11 should be OFF")
-                elif path_number == 3:
-                    print("Path 3 food received - LED on pin 12 should be OFF")
+                # If there's a next path, turn on its LED
+                next_path = path_number + 1
+                if next_path <= len(self.selected_tables):
+                    command = f"PATH_START:{next_path}\n"
+                    print(f"Sending path start command for next path: {command.strip()}")
+                    self.serial_port.write(command.encode())
+                    self.serial_port.flush()
+                    print(f"Sent path start command for Path {next_path}")
+                    time.sleep(0.5)
+                
             except Exception as e:
-                print(f"Error sending food received command: {e}")
+                print(f"Error sending LED control commands: {e}")
         
         # Close the confirmation window
         window.destroy()

@@ -114,46 +114,35 @@ void loop() {
       Serial.println("Executing LED test sequence...");
       testLEDs();
     }
-    // Check if it's a path completion command
-    else if (inputString.startsWith("PATH_COMPLETE:")) {
-      // Extract path number after "PATH_COMPLETE:"
-      String pathStr = inputString.substring(13);
+    // Check if it's a path start command
+    else if (inputString.startsWith("PATH_START:")) {
+      // Extract path number after "PATH_START:"
+      String pathStr = inputString.substring(11);
       pathStr.trim();  // Remove any whitespace or newlines
       int pathNumber = pathStr.toInt();
       
       // Validate path number
-      if (pathNumber >= 1 && pathNumber <= 4) {
-        Serial.print("Path ");
+      if (pathNumber >= 1 && pathNumber <= 3) {
+        Serial.print("Starting Path ");
         Serial.print(pathNumber);
-        Serial.println(" completed");
+        Serial.println(" - Turning ON LED");
         
-        // Handle LED control based on path number
-        if (pathNumber == 4) {
-          // Path 4: Turn off all LEDs
-          Serial.println("Turning OFF all LEDs");
-          digitalWrite(LED_PATH1, LOW);
-          digitalWrite(LED_PATH2, LOW);
-          digitalWrite(LED_PATH3, LOW);
-        } else {
-          // Paths 1-3: Turn on specific LED
-          Serial.print("Turning ON LED for Path ");
-          Serial.println(pathNumber);
-          switch(pathNumber) {
-            case 1:
-              digitalWrite(LED_PATH1, HIGH);  // Turn ON LED for Path 1
-              break;
-            case 2:
-              digitalWrite(LED_PATH2, HIGH);  // Turn ON LED for Path 2
-              break;
-            case 3:
-              digitalWrite(LED_PATH3, HIGH);  // Turn ON LED for Path 3
-              break;
-          }
+        // Turn on the appropriate LED
+        switch(pathNumber) {
+          case 1:
+            digitalWrite(LED_PATH1, HIGH);  // Turn ON LED for Path 1
+            break;
+          case 2:
+            digitalWrite(LED_PATH2, HIGH);  // Turn ON LED for Path 2
+            break;
+          case 3:
+            digitalWrite(LED_PATH3, HIGH);  // Turn ON LED for Path 3
+            break;
         }
       } else {
         Serial.print("Error: Invalid path number received: ");
         Serial.print(pathNumber);
-        Serial.println(" (must be between 1 and 4)");
+        Serial.println(" (must be between 1 and 3)");
       }
     }
     // Check if it's a food received command
