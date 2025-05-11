@@ -122,27 +122,38 @@ void loop() {
       int pathNumber = pathStr.toInt();
       
       // Validate path number
-      if (pathNumber >= 1 && pathNumber <= 3) {
+      if (pathNumber >= 1 && pathNumber <= 4) {
         Serial.print("Path ");
         Serial.print(pathNumber);
-        Serial.println(" completed - Turning ON LED");
+        Serial.println(" completed");
         
-        // Turn on the appropriate LED
-        switch(pathNumber) {
-          case 1:
-            digitalWrite(LED_PATH1, HIGH);  // Turn ON LED for Path 1
-            break;
-          case 2:
-            digitalWrite(LED_PATH2, HIGH);  // Turn ON LED for Path 2
-            break;
-          case 3:
-            digitalWrite(LED_PATH3, HIGH);  // Turn ON LED for Path 3
-            break;
+        // Handle LED control based on path number
+        if (pathNumber == 4) {
+          // Path 4: Turn off all LEDs
+          Serial.println("Turning OFF all LEDs");
+          digitalWrite(LED_PATH1, LOW);
+          digitalWrite(LED_PATH2, LOW);
+          digitalWrite(LED_PATH3, LOW);
+        } else {
+          // Paths 1-3: Turn on specific LED
+          Serial.print("Turning ON LED for Path ");
+          Serial.println(pathNumber);
+          switch(pathNumber) {
+            case 1:
+              digitalWrite(LED_PATH1, HIGH);  // Turn ON LED for Path 1
+              break;
+            case 2:
+              digitalWrite(LED_PATH2, HIGH);  // Turn ON LED for Path 2
+              break;
+            case 3:
+              digitalWrite(LED_PATH3, HIGH);  // Turn ON LED for Path 3
+              break;
+          }
         }
       } else {
         Serial.print("Error: Invalid path number received: ");
         Serial.print(pathNumber);
-        Serial.println(" (must be between 1 and 3)");
+        Serial.println(" (must be between 1 and 4)");
       }
     }
     // Check if it's a food received command

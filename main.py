@@ -169,8 +169,8 @@ class MesamateApp:
                 # Send path completion command to Arduino
                 if self.serial_port and self.serial_port.is_open:
                     try:
-                        # Ensure path number is valid (1-3)
-                        if 1 <= path_number <= 3:
+                        # Ensure path number is valid (1-4)
+                        if 1 <= path_number <= 4:
                             command = f"PATH_COMPLETE:{path_number}\n"
                             print(f"Sending path completion command: {command.strip()}")
                             self.serial_port.write(command.encode())
@@ -187,8 +187,10 @@ class MesamateApp:
                                 print("Path 2 completed - LED on pin 11 should be ON")
                             elif path_number == 3:
                                 print("Path 3 completed - LED on pin 12 should be ON")
+                            elif path_number == 4:
+                                print("Path 4 completed - All LEDs should be OFF")
                         else:
-                            print(f"Warning: Invalid path number {path_number} - must be between 1 and 3")
+                            print(f"Warning: Invalid path number {path_number} - must be between 1 and 4")
                     except Exception as e:
                         print(f"Error sending path completion command: {e}")
                 
