@@ -96,8 +96,9 @@ void processMovement(String movement) {
     i++;
   }
   
-  // Get the direction
+  // Get the direction (remove any whitespace or newline)
   direction = movement.substring(i);
+  direction.trim();  // Remove any whitespace or newline characters
   
   Serial.print("Number: ");
   Serial.print(number);
@@ -114,20 +115,22 @@ void processMovement(String movement) {
   isMoving = true;
   
   // Execute the movement
-  if (direction == "up") {
+  if (direction == "up" || direction == "UP") {
     Serial.println("Moving FORWARD");
     moveForward(totalDuration);
-  } else if (direction == "down") {
+  } else if (direction == "down" || direction == "DOWN") {
     Serial.println("Moving BACKWARD");
     moveBackward(totalDuration);
-  } else if (direction == "left") {
+  } else if (direction == "left" || direction == "LEFT") {
     Serial.println("Turning LEFT");
     turnLeft(totalDuration);
-  } else if (direction == "right") {
+  } else if (direction == "right" || direction == "RIGHT") {
     Serial.println("Turning RIGHT");
     turnRight(totalDuration);
   } else {
-    Serial.println("Invalid direction!");
+    Serial.print("Invalid direction: '");
+    Serial.print(direction);
+    Serial.println("'");
   }
   
   stopMotors();
