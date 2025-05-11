@@ -443,6 +443,9 @@ class MesamateApp:
         self.reset_button_states()
         
     def center_window(self, window):
+        # Update window to get correct dimensions
+        window.update_idletasks()
+        
         # Get screen width and height
         screen_width = window.winfo_screenwidth()
         screen_height = window.winfo_screenheight()
@@ -457,6 +460,11 @@ class MesamateApp:
         
         # Set window position
         window.geometry(f"+{x}+{y}")
+        
+        # Ensure window stays on top
+        window.lift()
+        window.attributes('-topmost', True)
+        window.after_idle(window.attributes, '-topmost', False)
         
     def select_table(self, table):
         # Check if table is already selected
