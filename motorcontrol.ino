@@ -85,15 +85,18 @@ void serialEvent() {
 }
 
 void processMovement(String movement) {
+  // Extract number and direction
   int number = 0;
   String direction = "";
   
+  // Find the first non-digit character
   int i = 0;
   while (i < movement.length() && isDigit(movement[i])) {
     number = number * 10 + (movement[i] - '0');
     i++;
   }
   
+  // Get the direction
   direction = movement.substring(i);
   
   Serial.print("Number: ");
@@ -101,6 +104,7 @@ void processMovement(String movement) {
   Serial.print(", Direction: ");
   Serial.println(direction);
   
+  // Calculate total movement duration
   int totalDuration = number * SCALE_FACTOR * MOVEMENT_DURATION;
   
   Serial.print("Movement duration: ");
@@ -109,6 +113,7 @@ void processMovement(String movement) {
   
   isMoving = true;
   
+  // Execute the movement
   if (direction == "up") {
     Serial.println("Moving FORWARD");
     moveForward(totalDuration);
@@ -130,8 +135,8 @@ void processMovement(String movement) {
   
   // Send completion signal
   Serial.println("DIRECTION_DONE");
-  // Ensure the message is sent
   Serial.flush();
+  delay(100);  // Small delay to ensure message is sent
 }
 
 // Movement functions
