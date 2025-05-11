@@ -11,9 +11,9 @@ const int TRIG_PIN = 4;
 const int ECHO_PIN = 8;
 
 // LED pins for table delivery status
-const int LED_TABLE1 = 10;
-const int LED_TABLE2 = 11;
-const int LED_TABLE3 = 12;
+const int LED_PATH1 = 10;  // LED for first path
+const int LED_PATH2 = 11;  // LED for second path
+const int LED_PATH3 = 12;  // LED for third path
 
 // Distance threshold (in cm)
 const int DISTANCE_THRESHOLD = 30;
@@ -49,9 +49,9 @@ void setup() {
   pinMode(ECHO_PIN, INPUT);
   
   // Initialize LED pins
-  pinMode(LED_TABLE1, OUTPUT);
-  pinMode(LED_TABLE2, OUTPUT);
-  pinMode(LED_TABLE3, OUTPUT);
+  pinMode(LED_PATH1, OUTPUT);
+  pinMode(LED_PATH2, OUTPUT);
+  pinMode(LED_PATH3, OUTPUT);
   
   // Initialize serial communication
   Serial.begin(9600);
@@ -87,17 +87,23 @@ bool checkObstacle() {
   return false;
 }
 
-// Function to set LED status
-void setTableLED(int tableNumber, bool status) {
-  switch(tableNumber) {
+// Function to set LED status based on path number
+void setPathLED(int pathNumber, bool status) {
+  switch(pathNumber) {
     case 1:
-      digitalWrite(LED_TABLE1, status ? HIGH : LOW);
+      digitalWrite(LED_PATH1, status ? HIGH : LOW);
+      Serial.print("Path 1 LED: ");
+      Serial.println(status ? "ON" : "OFF");
       break;
     case 2:
-      digitalWrite(LED_TABLE2, status ? HIGH : LOW);
+      digitalWrite(LED_PATH2, status ? HIGH : LOW);
+      Serial.print("Path 2 LED: ");
+      Serial.println(status ? "ON" : "OFF");
       break;
     case 3:
-      digitalWrite(LED_TABLE3, status ? HIGH : LOW);
+      digitalWrite(LED_PATH3, status ? HIGH : LOW);
+      Serial.print("Path 3 LED: ");
+      Serial.println(status ? "ON" : "OFF");
       break;
   }
 }
@@ -130,20 +136,20 @@ void loop() {
     Serial.print("Received command: ");
     Serial.println(inputString);
     
-    // Check if it's a table delivery command
-    if (inputString.startsWith("TABLE_DELIVERED:")) {
-      int tableNumber = inputString.substring(15).toInt();
-      setTableLED(tableNumber, true);
-      Serial.print("Table ");
-      Serial.print(tableNumber);
-      Serial.println(" delivery confirmed");
+    // Check if it's a path completion command
+    if (inputString.startsWith("PATH_COMPLETE:")) {
+      int pathNumber = inputString.substring(13).toInt();
+      setPathLED(pathNumber, true);
+      Serial.print("Path ");
+      Serial.print(pathNumber);
+      Serial.println(" completed");
     }
     // Check if it's a food received command
     else if (inputString.startsWith("FOOD_RECEIVED:")) {
-      int tableNumber = inputString.substring(13).toInt();
-      setTableLED(tableNumber, false);
-      Serial.print("Table ");
-      Serial.print(tableNumber);
+      int pathNumber = inputString.substring(13).toInt();
+      setPathLED(pathNumber, false);
+      Serial.print("Path ");
+      Serial.print(pathNumber);
       Serial.println(" food received");
     }
     else {

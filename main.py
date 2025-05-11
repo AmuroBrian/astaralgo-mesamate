@@ -165,16 +165,16 @@ class MesamateApp:
                 # All directions for current path completed
                 print(f"\nPath {self.current_path_index + 1} completed: {current_path['description']}")
                 
-                # Send table delivery command to Arduino
+                # Send path completion command to Arduino
                 if self.serial_port and self.serial_port.is_open:
                     try:
-                        table_number = self.selected_tables[self.current_path_index]
-                        command = f"TABLE_DELIVERED:{table_number[-1]}\n"
+                        path_number = self.current_path_index + 1
+                        command = f"PATH_COMPLETE:{path_number}\n"
                         self.serial_port.write(command.encode())
                         self.serial_port.flush()
-                        print(f"Sent table delivery command for Table {table_number[-1]}")
+                        print(f"Sent path completion command for Path {path_number}")
                     except Exception as e:
-                        print(f"Error sending table delivery command: {e}")
+                        print(f"Error sending path completion command: {e}")
                 
                 self.current_path_index += 1
                 self.current_direction_index = 0
@@ -914,10 +914,12 @@ class MesamateApp:
         # Send command to Arduino to turn off LED
         if self.serial_port and self.serial_port.is_open:
             try:
-                command = f"FOOD_RECEIVED:{table[-1]}\n"
+                # Find the path number for this table
+                path_number = self.selected_tables.index(table) + 1
+                command = f"FOOD_RECEIVED:{path_number}\n"
                 self.serial_port.write(command.encode())
                 self.serial_port.flush()
-                print(f"Sent food received command for Table {table[-1]}")
+                print(f"Sent food received command for Path {path_number}")
             except Exception as e:
                 print(f"Error sending food received command: {e}")
         
