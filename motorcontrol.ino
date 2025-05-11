@@ -27,6 +27,9 @@ const int SCALE_FACTOR = 1;
 // Movement duration (in milliseconds)
 const int MOVEMENT_DURATION = 200;
 
+// Turn duration for 90 degrees (in milliseconds)
+const int TURN_DURATION = 500;
+
 // Maximum safe duration (about 5 minutes)
 const unsigned long MAX_DURATION = 300000;  // 300 seconds in milliseconds
 
@@ -61,21 +64,9 @@ void setup() {
   pinMode(LED_PATH2, OUTPUT);
   pinMode(LED_PATH3, OUTPUT);
   
-  // Test LED pins individually
-  Serial.println("\nTesting LED pins individually:");
-  Serial.println("Testing LED_PATH1 (Pin 10)...");
-  digitalWrite(LED_PATH1, HIGH);
-  delay(1000);
+  // Turn off all LEDs initially
   digitalWrite(LED_PATH1, LOW);
-  
-  Serial.println("Testing LED_PATH2 (Pin 11)...");
-  digitalWrite(LED_PATH2, HIGH);
-  delay(1000);
   digitalWrite(LED_PATH2, LOW);
-  
-  Serial.println("Testing LED_PATH3 (Pin 12)...");
-  digitalWrite(LED_PATH3, HIGH);
-  delay(1000);
   digitalWrite(LED_PATH3, LOW);
   
   inputString.reserve(200);
@@ -235,13 +226,13 @@ void processMovement(String movement) {
   // First, handle the turn if needed
   if (direction == "right" || direction == "RIGHT") {
     Serial.println("Turning right 90 degrees");
-    turnRight(500);  // Turn right for 500ms (90 degrees)
+    turnRight(TURN_DURATION);  // Turn right for 90 degrees
     delay(100);      // Small pause
     stopMotors();
     delay(100);      // Small pause
   } else if (direction == "left" || direction == "LEFT") {
     Serial.println("Turning left 90 degrees");
-    turnLeft(500);   // Turn left for 500ms (90 degrees)
+    turnLeft(TURN_DURATION);   // Turn left for 90 degrees
     delay(100);      // Small pause
     stopMotors();
     delay(100);      // Small pause
