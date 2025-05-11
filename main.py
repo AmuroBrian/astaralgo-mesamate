@@ -634,6 +634,26 @@ class MesamateApp:
             )
             return
             
+        # Reset all LEDs before starting new path
+        if self.serial_port and self.serial_port.is_open:
+            try:
+                # Turn off all LEDs first
+                command = "PATH_START:4\n"  # This will turn on all LEDs
+                self.serial_port.write(command.encode())
+                self.serial_port.flush()
+                time.sleep(0.5)
+                
+                # Then turn off all LEDs
+                for path in range(1, 4):
+                    command = f"FOOD_RECEIVED:{path}\n"
+                    self.serial_port.write(command.encode())
+                    self.serial_port.flush()
+                    time.sleep(0.1)
+                
+                print("Reset all LEDs before starting new path")
+            except Exception as e:
+                print(f"Error resetting LEDs: {e}")
+            
         # Close selection window
         self.selection_window.destroy()
         
