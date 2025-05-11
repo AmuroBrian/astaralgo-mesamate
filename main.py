@@ -129,7 +129,8 @@ class MesamateApp:
             if self.current_direction_index < len(current_path['directions']):
                 # Get current direction
                 current_direction = current_path['directions'][self.current_direction_index]
-                print(f"Processing direction: {current_direction}")
+                print(f"\nProcessing Path {self.current_path_index + 1}: {current_path['description']}")
+                print(f"Current direction {self.current_direction_index + 1}/{len(current_path['directions'])}: {current_direction}")
                 
                 # Send direction to Arduino
                 self.send_direction_to_arduino(current_direction)
@@ -162,16 +163,17 @@ class MesamateApp:
                 
             else:
                 # All directions for current path completed
-                print(f"Path {self.current_path_index + 1} completed")
+                print(f"\nPath {self.current_path_index + 1} completed: {current_path['description']}")
                 self.current_path_index += 1
                 self.current_direction_index = 0
                 
                 if self.current_path_index >= len(self.paths_to_process):
                     # All paths processed, show completion message
-                    print("All orders have been completed!")
+                    print("\nAll orders have been completed!")
                     self.show_completion_message()
                 else:
                     # Process next path
+                    print(f"\nMoving to next path: {self.current_path_index + 1}")
                     self.process_next_direction()
             
     def create_welcome_screen(self):
@@ -711,6 +713,9 @@ class MesamateApp:
         self.current_path_index = 0
         self.processing_path = False
         
+        print("\n=== Starting Path Processing ===")
+        print(f"Selected tables: {stations}")
+        
         # Draw all station points with labels
         for station_name, coords in STATIONS.items():
             self.ax.scatter(coords[1], coords[0], c='blue', s=100)
@@ -724,6 +729,7 @@ class MesamateApp:
         
         # First path: initial position to first station
         first_station = stations[0]
+        print(f"\nCalculating Path 1: Initial Position to {first_station}")
         path = self.a_star_search(grid, initial_position, STATIONS[first_station])
         if path:
             directions = self.get_directions(path)
@@ -732,13 +738,15 @@ class MesamateApp:
                 'directions': directions,
                 'description': f"Path 1 (Initial to {first_station})"
             })
-            print(f"\nPath 1 (Initial to {first_station}):")
-            print(f"Directions: {directions}")
+            print(f"Path 1 directions: {directions}")
+        else:
+            print(f"ERROR: No path found for Initial Position to {first_station}")
         
         # Process paths between consecutive stations
         for i in range(len(stations) - 1):
             current_station = stations[i]
             next_station = stations[i + 1]
+            print(f"\nCalculating Path {i+2}: {current_station} to {next_station}")
             path = self.a_star_search(grid, STATIONS[current_station], STATIONS[next_station])
             if path:
                 directions = self.get_directions(path)
@@ -747,11 +755,13 @@ class MesamateApp:
                     'directions': directions,
                     'description': f"Path {i+2} ({current_station} to {next_station})"
                 })
-                print(f"\nPath {i+2} ({current_station} to {next_station}):")
-                print(f"Directions: {directions}")
+                print(f"Path {i+2} directions: {directions}")
+            else:
+                print(f"ERROR: No path found for {current_station} to {next_station}")
         
         # Final path: last station back to initial position
         last_station = stations[-1]
+        print(f"\nCalculating Final Path: {last_station} to Initial Position")
         path = self.a_star_search(grid, STATIONS[last_station], initial_position)
         if path:
             directions = self.get_directions(path)
@@ -760,8 +770,12 @@ class MesamateApp:
                 'directions': directions,
                 'description': f"Path {len(stations)+1} ({last_station} to Initial)"
             })
-            print(f"\nPath {len(stations)+1} ({last_station} to Initial):")
-            print(f"Directions: {directions}")
+            print(f"Final path directions: {directions}")
+        else:
+            print(f"ERROR: No path found for {last_station} to Initial Position")
+        
+        print("\n=== All Paths Calculated ===")
+        print(f"Total paths to process: {len(self.paths_to_process)}")
         
         # Start processing the first path
         self.process_next_direction()
