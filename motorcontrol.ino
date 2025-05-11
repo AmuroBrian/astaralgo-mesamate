@@ -82,40 +82,24 @@ void setup() {
 void testLEDs() {
   Serial.println("\n=== LED TEST SEQUENCE ===");
   
-  // Turn all LEDs on
-  Serial.println("Turning all LEDs ON");
-  digitalWrite(LED_PATH1, HIGH);
-  digitalWrite(LED_PATH2, HIGH);
-  digitalWrite(LED_PATH3, HIGH);
-  delay(2000);
-  
-  // Turn all LEDs off
-  Serial.println("Turning all LEDs OFF");
-  digitalWrite(LED_PATH1, LOW);
-  digitalWrite(LED_PATH2, LOW);
-  digitalWrite(LED_PATH3, LOW);
-  delay(1000);
-  
-  // Test each LED individually with longer duration
-  Serial.println("\nTesting individual LEDs:");
-  
+  // Test each LED individually
   Serial.println("Testing LED 1 (Pin 10)");
   digitalWrite(LED_PATH1, HIGH);
-  delay(2000);
-  digitalWrite(LED_PATH1, LOW);
   delay(1000);
+  digitalWrite(LED_PATH1, LOW);
+  delay(500);
   
   Serial.println("Testing LED 2 (Pin 11)");
   digitalWrite(LED_PATH2, HIGH);
-  delay(2000);
-  digitalWrite(LED_PATH2, LOW);
   delay(1000);
+  digitalWrite(LED_PATH2, LOW);
+  delay(500);
   
   Serial.println("Testing LED 3 (Pin 12)");
   digitalWrite(LED_PATH3, HIGH);
-  delay(2000);
-  digitalWrite(LED_PATH3, LOW);
   delay(1000);
+  digitalWrite(LED_PATH3, LOW);
+  delay(500);
   
   Serial.println("LED test sequence completed");
 }
@@ -133,38 +117,42 @@ void loop() {
     // Check if it's a path completion command
     else if (inputString.startsWith("PATH_COMPLETE:")) {
       int pathNumber = inputString.substring(13).toInt();
-      Serial.print("Processing path completion for Path ");
-      Serial.println(pathNumber);
-      
-      // Turn off all LEDs first
-      digitalWrite(LED_PATH1, LOW);
-      digitalWrite(LED_PATH2, LOW);
-      digitalWrite(LED_PATH3, LOW);
-      delay(100);  // Small delay to ensure LEDs are off
-      
-      // Turn on the appropriate LED
-      setPathLED(pathNumber, true);
-      
-      // Send acknowledgment
       Serial.print("Path ");
       Serial.print(pathNumber);
-      Serial.println(" LED activated");
-      Serial.flush();
+      Serial.println(" completed - Turning ON LED");
+      
+      // Turn on the appropriate LED
+      switch(pathNumber) {
+        case 1:
+          digitalWrite(LED_PATH1, HIGH);  // Turn ON LED for Path 1
+          break;
+        case 2:
+          digitalWrite(LED_PATH2, HIGH);  // Turn ON LED for Path 2
+          break;
+        case 3:
+          digitalWrite(LED_PATH3, HIGH);  // Turn ON LED for Path 3
+          break;
+      }
     }
     // Check if it's a food received command
     else if (inputString.startsWith("FOOD_RECEIVED:")) {
       int pathNumber = inputString.substring(13).toInt();
-      Serial.print("Processing food received for Path ");
-      Serial.println(pathNumber);
-      
-      // Turn off the specific LED
-      setPathLED(pathNumber, false);
-      
-      // Send acknowledgment
-      Serial.print("Path ");
+      Serial.print("Food received for Path ");
       Serial.print(pathNumber);
-      Serial.println(" LED deactivated");
-      Serial.flush();
+      Serial.println(" - Turning OFF LED");
+      
+      // Turn off the appropriate LED
+      switch(pathNumber) {
+        case 1:
+          digitalWrite(LED_PATH1, LOW);  // Turn OFF LED for Path 1
+          break;
+        case 2:
+          digitalWrite(LED_PATH2, LOW);  // Turn OFF LED for Path 2
+          break;
+        case 3:
+          digitalWrite(LED_PATH3, LOW);  // Turn OFF LED for Path 3
+          break;
+      }
     }
     else {
       processMovement(inputString);
@@ -284,49 +272,6 @@ bool checkObstacle() {
     return true;
   }
   return false;
-}
-
-// Function to set LED status based on path number
-void setPathLED(int pathNumber, bool status) {
-  Serial.print("\nSetting Path ");
-  Serial.print(pathNumber);
-  Serial.print(" LED to ");
-  Serial.println(status ? "ON" : "OFF");
-  
-  switch(pathNumber) {
-    case 1:
-      digitalWrite(LED_PATH1, status ? HIGH : LOW);
-      Serial.print("LED_PATH1 (Pin 10) set to ");
-      Serial.println(status ? "HIGH" : "LOW");
-      break;
-    case 2:
-      digitalWrite(LED_PATH2, status ? HIGH : LOW);
-      Serial.print("LED_PATH2 (Pin 11) set to ");
-      Serial.println(status ? "HIGH" : "LOW");
-      break;
-    case 3:
-      digitalWrite(LED_PATH3, status ? HIGH : LOW);
-      Serial.print("LED_PATH3 (Pin 12) set to ");
-      Serial.println(status ? "HIGH" : "LOW");
-      break;
-  }
-  
-  // Verify LED state
-  delay(100);  // Small delay to ensure LED state is stable
-  Serial.print("Verifying LED state - Path ");
-  Serial.print(pathNumber);
-  Serial.print(" LED is ");
-  switch(pathNumber) {
-    case 1:
-      Serial.println(digitalRead(LED_PATH1) == HIGH ? "ON" : "OFF");
-      break;
-    case 2:
-      Serial.println(digitalRead(LED_PATH2) == HIGH ? "ON" : "OFF");
-      break;
-    case 3:
-      Serial.println(digitalRead(LED_PATH3) == HIGH ? "ON" : "OFF");
-      break;
-  }
 }
 
 void testMotors() {

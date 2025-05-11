@@ -900,7 +900,7 @@ class MesamateApp:
         # Title
         title_label = tk.Label(
             main_container,
-            text="Orders Completed!",
+            text="All Orders Have Been Completed!",
             font=("Helvetica", 16, "bold"),
             bg=self.theme_color,
             fg=self.text_color
@@ -910,7 +910,7 @@ class MesamateApp:
         # Message
         message_label = tk.Label(
             main_container,
-            text="All orders have been successfully delivered.",
+            text="The robot has successfully delivered all orders.",
             font=("Helvetica", 12),
             bg=self.theme_color,
             fg=self.text_color,
