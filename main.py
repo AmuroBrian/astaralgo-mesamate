@@ -1007,7 +1007,7 @@ class MesamateApp:
                 # Wait for acknowledgment
                 time.sleep(0.5)
                 
-                # If there's a next path, turn on its LED
+                # If there's a next path, turn on its LED (which will automatically turn off the previous one)
                 next_path = path_number + 1
                 if next_path <= len(self.selected_tables):
                     command = f"PATH_START:{next_path}\n"

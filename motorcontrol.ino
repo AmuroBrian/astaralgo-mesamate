@@ -127,7 +127,12 @@ void loop() {
         Serial.print(pathNumber);
         Serial.println(" - Turning ON LED");
         
-        // Turn on the appropriate LED
+        // First turn off all LEDs
+        digitalWrite(LED_PATH1, LOW);
+        digitalWrite(LED_PATH2, LOW);
+        digitalWrite(LED_PATH3, LOW);
+        
+        // Then turn on only the current path's LED
         switch(pathNumber) {
           case 1:
             digitalWrite(LED_PATH1, HIGH);  // Turn ON LED for Path 1
