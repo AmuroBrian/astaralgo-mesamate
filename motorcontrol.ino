@@ -15,6 +15,9 @@ const int SCALE_FACTOR = 1;
 // Movement duration (in milliseconds)
 const int MOVEMENT_DURATION = 200;
 
+// Maximum safe duration (about 5 minutes)
+const unsigned long MAX_DURATION = 300000;  // 300 seconds in milliseconds
+
 // Buffer for receiving serial data
 String inputString = "";
 bool stringComplete = false;
@@ -105,8 +108,14 @@ void processMovement(String movement) {
   Serial.print(", Direction: ");
   Serial.println(direction);
   
-  // Calculate total movement duration
-  int totalDuration = number * SCALE_FACTOR * MOVEMENT_DURATION;
+  // Calculate total movement duration using unsigned long to prevent overflow
+  unsigned long totalDuration = (unsigned long)number * SCALE_FACTOR * MOVEMENT_DURATION;
+  
+  // Limit the maximum duration
+  if (totalDuration > MAX_DURATION) {
+    totalDuration = MAX_DURATION;
+    Serial.println("Warning: Duration capped at 5 minutes");
+  }
   
   Serial.print("Movement duration: ");
   Serial.print(totalDuration);
@@ -142,58 +151,46 @@ void processMovement(String movement) {
   delay(100);  // Small delay to ensure message is sent
 }
 
-// Movement functions
-void moveForward(int duration) {
+// Update movement functions to use unsigned long for duration
+void moveForward(unsigned long duration) {
   Serial.println("Executing FORWARD movement");
-  // Left motor forward
   digitalWrite(motor1pin1, HIGH);
   digitalWrite(motor1pin2, LOW);
-  // Right motor forward
   digitalWrite(motor2pin1, HIGH);
   digitalWrite(motor2pin2, LOW);
-  // Set speeds
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
   delay(duration);
 }
 
-void moveBackward(int duration) {
+void moveBackward(unsigned long duration) {
   Serial.println("Executing BACKWARD movement");
-  // Left motor backward
   digitalWrite(motor1pin1, LOW);
   digitalWrite(motor1pin2, HIGH);
-  // Right motor backward
   digitalWrite(motor2pin1, LOW);
   digitalWrite(motor2pin2, HIGH);
-  // Set speeds
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
   delay(duration);
 }
 
-void turnLeft(int duration) {
+void turnLeft(unsigned long duration) {
   Serial.println("Executing LEFT turn");
-  // Left motor backward
   digitalWrite(motor1pin1, LOW);
   digitalWrite(motor1pin2, HIGH);
-  // Right motor forward
   digitalWrite(motor2pin1, HIGH);
   digitalWrite(motor2pin2, LOW);
-  // Set speeds
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
   delay(duration);
 }
 
-void turnRight(int duration) {
+void turnRight(unsigned long duration) {
   Serial.println("Executing RIGHT turn");
-  // Left motor forward
   digitalWrite(motor1pin1, HIGH);
   digitalWrite(motor1pin2, LOW);
-  // Right motor backward
   digitalWrite(motor2pin1, LOW);
   digitalWrite(motor2pin2, HIGH);
-  // Set speeds
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
   delay(duration);
