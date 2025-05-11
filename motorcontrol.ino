@@ -223,6 +223,23 @@ void processMovement(String movement) {
   
   // Execute the movement with obstacle detection
   unsigned long startTime = millis();
+  
+  // First, handle the turn if needed
+  if (direction == "right" || direction == "RIGHT") {
+    Serial.println("Turning right 90 degrees");
+    turnRight(500);  // Turn right for 500ms (90 degrees)
+    delay(100);      // Small pause
+    stopMotors();
+    delay(100);      // Small pause
+  } else if (direction == "left" || direction == "LEFT") {
+    Serial.println("Turning left 90 degrees");
+    turnLeft(500);   // Turn left for 500ms (90 degrees)
+    delay(100);      // Small pause
+    stopMotors();
+    delay(100);      // Small pause
+  }
+  
+  // Then move forward for the specified duration
   while (millis() - startTime < totalDuration) {
     if (checkObstacle()) {
       stopMotors();
@@ -230,26 +247,10 @@ void processMovement(String movement) {
       delay(1000); // Wait for 1 second
       if (!checkObstacle()) {
         // Resume movement if obstacle is cleared
-        if (direction == "up" || direction == "UP") {
-          moveForward(100);
-        } else if (direction == "down" || direction == "DOWN") {
-          moveBackward(100);
-        } else if (direction == "left" || direction == "LEFT") {
-          turnLeft(100);
-        } else if (direction == "right" || direction == "RIGHT") {
-          turnRight(100);
-        }
+        moveForward(MOTOR_SPEED);
       }
     } else {
-      if (direction == "up" || direction == "UP") {
-        moveForward(100);
-      } else if (direction == "down" || direction == "DOWN") {
-        moveBackward(100);
-      } else if (direction == "left" || direction == "LEFT") {
-        turnLeft(100);
-      } else if (direction == "right" || direction == "RIGHT") {
-        turnRight(100);
-      }
+      moveForward(MOTOR_SPEED);
     }
   }
   
@@ -352,41 +353,43 @@ void testMotors() {
   delay(500);
 }
 
-// Update movement functions to remove delay
-void moveForward(unsigned long duration) {
+// Update movement functions to use speed parameter
+void moveForward(int speed) {
   digitalWrite(motor1pin1, HIGH);
   digitalWrite(motor1pin2, LOW);
   digitalWrite(motor2pin1, HIGH);
   digitalWrite(motor2pin2, LOW);
-  analogWrite(speedmotor1, MOTOR_SPEED);
-  analogWrite(speedmotor2, MOTOR_SPEED);
+  analogWrite(speedmotor1, speed);
+  analogWrite(speedmotor2, speed);
 }
 
-void moveBackward(unsigned long duration) {
+void moveBackward(int speed) {
   digitalWrite(motor1pin1, LOW);
   digitalWrite(motor1pin2, HIGH);
   digitalWrite(motor2pin1, LOW);
   digitalWrite(motor2pin2, HIGH);
-  analogWrite(speedmotor1, MOTOR_SPEED);
-  analogWrite(speedmotor2, MOTOR_SPEED);
+  analogWrite(speedmotor1, speed);
+  analogWrite(speedmotor2, speed);
 }
 
-void turnLeft(unsigned long duration) {
+void turnLeft(int duration) {
   digitalWrite(motor1pin1, LOW);
   digitalWrite(motor1pin2, HIGH);
   digitalWrite(motor2pin1, HIGH);
   digitalWrite(motor2pin2, LOW);
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
+  delay(duration);
 }
 
-void turnRight(unsigned long duration) {
+void turnRight(int duration) {
   digitalWrite(motor1pin1, HIGH);
   digitalWrite(motor1pin2, LOW);
   digitalWrite(motor2pin1, LOW);
   digitalWrite(motor2pin2, HIGH);
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
+  delay(duration);
 }
 
 void stopMotors() {
