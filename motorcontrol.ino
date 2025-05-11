@@ -1,19 +1,19 @@
 // Motor pins
-const int motor1pin1 = 2;
-const int motor1pin2 = 3;
-const int speedmotor1 = 5;
-const int motor2pin1 = 6;
-const int motor2pin2 = 7;
-const int speedmotor2 = 9;
+const int motor1pin1 = 2;  // Left motor direction 1
+const int motor1pin2 = 3;  // Left motor direction 2
+const int speedmotor1 = 5; // Left motor speed
+const int motor2pin1 = 6;  // Right motor direction 1
+const int motor2pin2 = 7;  // Right motor direction 2
+const int speedmotor2 = 9; // Right motor speed
 
-// Motor speed (increased from 25 to 100 for faster movement)
-const int MOTOR_SPEED = 100;  // Increased to 40% of 255
+// Motor speed (increased for better movement)
+const int MOTOR_SPEED = 150;  // Increased to about 60% of 255
 
 // Direction scaling factor
-const int SCALE_FACTOR = 1;  // Adjust this to change movement distance
+const int SCALE_FACTOR = 1;
 
 // Movement duration (in milliseconds)
-const int MOVEMENT_DURATION = 200;  // Reduced from 1000ms to 200ms per unit for faster testing
+const int MOVEMENT_DURATION = 200;
 
 // Buffer for receiving serial data
 String inputString = "";
@@ -32,30 +32,49 @@ void setup() {
   Serial.begin(9600);
   inputString.reserve(200);
   
-  // Debug print
+  // Test motors on startup
+  Serial.println("Testing motors...");
+  testMotors();
   Serial.println("Arduino initialized and ready!");
 }
 
+void testMotors() {
+  // Test each direction briefly
+  Serial.println("Testing FORWARD");
+  moveForward(500);
+  stopMotors();
+  delay(500);
+  
+  Serial.println("Testing BACKWARD");
+  moveBackward(500);
+  stopMotors();
+  delay(500);
+  
+  Serial.println("Testing LEFT");
+  turnLeft(500);
+  stopMotors();
+  delay(500);
+  
+  Serial.println("Testing RIGHT");
+  turnRight(500);
+  stopMotors();
+  delay(500);
+}
+
 void loop() {
-  // Process complete commands
   if (stringComplete) {
-    // Debug print received command
     Serial.print("Received command: ");
     Serial.println(inputString);
     
-    // Process the single movement command
     processMovement(inputString);
     
-    // Clear the string for next command
     inputString = "";
     stringComplete = false;
     
-    // Send completion signal
     Serial.println("DIRECTION_DONE");
   }
 }
 
-// Serial event handler
 void serialEvent() {
   while (Serial.available()) {
     char inChar = (char)Serial.read();
@@ -66,98 +85,101 @@ void serialEvent() {
   }
 }
 
-// Process individual movement command
 void processMovement(String movement) {
-  // Extract number and direction
   int number = 0;
   String direction = "";
   
-  // Find the first non-digit character
   int i = 0;
   while (i < movement.length() && isDigit(movement[i])) {
     number = number * 10 + (movement[i] - '0');
     i++;
   }
   
-  // Get the direction
   direction = movement.substring(i);
   
-  // Debug print parsed values
   Serial.print("Number: ");
   Serial.print(number);
   Serial.print(", Direction: ");
   Serial.println(direction);
   
-  // Calculate total movement duration
   int totalDuration = number * SCALE_FACTOR * MOVEMENT_DURATION;
   
-  // Debug print duration
   Serial.print("Movement duration: ");
   Serial.print(totalDuration);
   Serial.println("ms");
   
-  // Execute the movement
   if (direction == "up") {
-    Serial.println("Moving UP");
-    moveUp(totalDuration);
+    Serial.println("Moving FORWARD");
+    moveForward(totalDuration);
   } else if (direction == "down") {
-    Serial.println("Moving DOWN");
-    moveDown(totalDuration);
+    Serial.println("Moving BACKWARD");
+    moveBackward(totalDuration);
   } else if (direction == "left") {
-    Serial.println("Moving LEFT");
-    moveLeft(totalDuration);
+    Serial.println("Turning LEFT");
+    turnLeft(totalDuration);
   } else if (direction == "right") {
-    Serial.println("Moving RIGHT");
-    moveRight(totalDuration);
+    Serial.println("Turning RIGHT");
+    turnRight(totalDuration);
   } else {
     Serial.println("Invalid direction!");
   }
   
-  // Stop motors
   stopMotors();
   Serial.println("Motors stopped");
 }
 
-// Movement functions
-void moveUp(int duration) {
-  Serial.println("Executing UP movement");
+// New movement functions with clearer naming
+void moveForward(int duration) {
+  Serial.println("Executing FORWARD movement");
+  // Left motor forward
   digitalWrite(motor1pin1, HIGH);
   digitalWrite(motor1pin2, LOW);
+  // Right motor forward
   digitalWrite(motor2pin1, HIGH);
   digitalWrite(motor2pin2, LOW);
+  // Set speeds
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
   delay(duration);
 }
 
-void moveDown(int duration) {
-  Serial.println("Executing DOWN movement");
+void moveBackward(int duration) {
+  Serial.println("Executing BACKWARD movement");
+  // Left motor backward
   digitalWrite(motor1pin1, LOW);
   digitalWrite(motor1pin2, HIGH);
+  // Right motor backward
   digitalWrite(motor2pin1, LOW);
   digitalWrite(motor2pin2, HIGH);
+  // Set speeds
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
   delay(duration);
 }
 
-void moveLeft(int duration) {
-  Serial.println("Executing LEFT movement");
+void turnLeft(int duration) {
+  Serial.println("Executing LEFT turn");
+  // Left motor backward
   digitalWrite(motor1pin1, LOW);
   digitalWrite(motor1pin2, HIGH);
+  // Right motor forward
   digitalWrite(motor2pin1, HIGH);
   digitalWrite(motor2pin2, LOW);
+  // Set speeds
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
   delay(duration);
 }
 
-void moveRight(int duration) {
-  Serial.println("Executing RIGHT movement");
+void turnRight(int duration) {
+  Serial.println("Executing RIGHT turn");
+  // Left motor forward
   digitalWrite(motor1pin1, HIGH);
   digitalWrite(motor1pin2, LOW);
+  // Right motor backward
   digitalWrite(motor2pin1, LOW);
   digitalWrite(motor2pin2, HIGH);
+  // Set speeds
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
   delay(duration);
