@@ -129,11 +129,27 @@ class MesamateApp:
                 path_number = self.current_path_index + 1
                 if self.serial_port and self.serial_port.is_open:
                     try:
-                        command = f"PATH_START:{path_number}\n"
-                        print(f"Sending path start command: {command.strip()}")
-                        self.serial_port.write(command.encode())
-                        self.serial_port.flush()
-                        print(f"Sent path start command for Path {path_number}")
+                        # For Path 1, explicitly turn ON LED 10
+                        if path_number == 1:
+                            # First turn off all LEDs
+                            for path in range(1, 4):
+                                command = f"FOOD_RECEIVED:{path}\n"
+                                self.serial_port.write(command.encode())
+                                self.serial_port.flush()
+                                time.sleep(0.1)
+                            
+                            # Then turn ON LED 10 for Path 1
+                            command = "PATH_START:1\n"
+                            print("Starting Path 1 - Turning ON LED 10")
+                            self.serial_port.write(command.encode())
+                            self.serial_port.flush()
+                            print("Sent path start command for Path 1")
+                        else:
+                            command = f"PATH_START:{path_number}\n"
+                            print(f"Sending path start command: {command.strip()}")
+                            self.serial_port.write(command.encode())
+                            self.serial_port.flush()
+                            print(f"Sent path start command for Path {path_number}")
                         time.sleep(0.5)
                     except Exception as e:
                         print(f"Error sending path start command: {e}")
