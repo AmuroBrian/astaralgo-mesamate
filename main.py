@@ -164,6 +164,18 @@ class MesamateApp:
             else:
                 # All directions for current path completed
                 print(f"\nPath {self.current_path_index + 1} completed: {current_path['description']}")
+                
+                # Send table delivery command to Arduino
+                if self.serial_port and self.serial_port.is_open:
+                    try:
+                        table_number = self.selected_tables[self.current_path_index]
+                        command = f"TABLE_DELIVERED:{table_number[-1]}\n"
+                        self.serial_port.write(command.encode())
+                        self.serial_port.flush()
+                        print(f"Sent table delivery command for Table {table_number[-1]}")
+                    except Exception as e:
+                        print(f"Error sending table delivery command: {e}")
+                
                 self.current_path_index += 1
                 self.current_direction_index = 0
                 
@@ -783,17 +795,47 @@ class MesamateApp:
     def show_completion_message(self):
         # Create completion message frame
         completion_frame = tk.Frame(self.root, bg=self.theme_color)
-        completion_frame.pack(pady=10)  # Reduced padding
+        completion_frame.pack(pady=10)
         
         # Completion message
         completion_label = tk.Label(
             completion_frame,
             text="ALL ORDERS HAVE BEEN DELIVERED",
-            font=("Helvetica", 16, "bold"),  # Reduced font size
+            font=("Helvetica", 16, "bold"),
             bg=self.theme_color,
             fg=self.text_color
         )
-        completion_label.pack(pady=(0, 10))  # Reduced padding
+        completion_label.pack(pady=(0, 10))
+        
+        # Create frame for delivery confirmations
+        delivery_frame = tk.Frame(completion_frame, bg=self.theme_color)
+        delivery_frame.pack(pady=10)
+        
+        # Add delivery confirmation buttons for each table
+        for table in self.selected_tables:
+            table_frame = tk.Frame(delivery_frame, bg=self.theme_color)
+            table_frame.pack(pady=5)
+            
+            # Table label
+            table_label = tk.Label(
+                table_frame,
+                text=f"Table {table[-1]}",
+                font=("Helvetica", 12, "bold"),
+                bg=self.theme_color,
+                fg=self.text_color
+            )
+            table_label.pack(side=tk.LEFT, padx=10)
+            
+            # Confirm delivery button
+            confirm_btn = self.create_rounded_button(
+                table_frame,
+                "Confirm Delivery",
+                lambda t=table: self.confirm_delivery(t),
+                width=15,
+                height=1,
+                font_size=10
+            )
+            confirm_btn.pack(side=tk.LEFT, padx=10)
         
         # OKAY button
         okay_btn_frame = self.create_rounded_button(
@@ -805,8 +847,89 @@ class MesamateApp:
             font_size=14,
             is_bold=True
         )
-        okay_btn_frame.pack()
+        okay_btn_frame.pack(pady=10)
+
+    def confirm_delivery(self, table):
+        # Create a new window for delivery confirmation
+        confirm_window = tk.Toplevel(self.root)
+        confirm_window.title("Delivery Confirmation")
+        confirm_window.geometry("400x300")
+        confirm_window.configure(bg=self.theme_color)
         
+        # Center the window
+        self.center_window(confirm_window)
+        
+        # Create main container
+        main_container = tk.Frame(confirm_window, bg=self.theme_color)
+        main_container.pack(pady=20, padx=20, fill="both", expand=True)
+        
+        # Title
+        title_label = tk.Label(
+            main_container,
+            text="Food Delivery Confirmation",
+            font=("Helvetica", 16, "bold"),
+            bg=self.theme_color,
+            fg=self.text_color
+        )
+        title_label.pack(pady=(0, 20))
+        
+        # Message
+        message_label = tk.Label(
+            main_container,
+            text=f"Has the food been received by the customer at Table {table[-1]}?",
+            font=("Helvetica", 12),
+            bg=self.theme_color,
+            fg=self.text_color,
+            wraplength=350
+        )
+        message_label.pack(pady=10)
+        
+        # Button frame
+        button_frame = tk.Frame(main_container, bg=self.theme_color)
+        button_frame.pack(pady=20)
+        
+        # Yes button
+        yes_btn = self.create_rounded_button(
+            button_frame,
+            "Yes, Received",
+            lambda: self.handle_food_received(table, confirm_window),
+            width=15,
+            height=1,
+            font_size=12
+        )
+        yes_btn.pack(side=tk.LEFT, padx=10)
+        
+        # No button
+        no_btn = self.create_rounded_button(
+            button_frame,
+            "No, Not Yet",
+            confirm_window.destroy,
+            width=15,
+            height=1,
+            font_size=12
+        )
+        no_btn.pack(side=tk.LEFT, padx=10)
+
+    def handle_food_received(self, table, window):
+        # Send command to Arduino to turn off LED
+        if self.serial_port and self.serial_port.is_open:
+            try:
+                command = f"FOOD_RECEIVED:{table[-1]}\n"
+                self.serial_port.write(command.encode())
+                self.serial_port.flush()
+                print(f"Sent food received command for Table {table[-1]}")
+            except Exception as e:
+                print(f"Error sending food received command: {e}")
+        
+        # Close the confirmation window
+        window.destroy()
+        
+        # Show success message
+        messagebox.showinfo(
+            "Delivery Confirmed",
+            f"Food delivery for Table {table[-1]} has been confirmed.\nThank you for using MESAMATE!"
+        )
+
     def reset_and_return_to_welcome(self):
         # Clear the selected tables array
         self.selected_tables = []

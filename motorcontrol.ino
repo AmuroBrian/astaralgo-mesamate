@@ -6,6 +6,18 @@ const int motor2pin1 = 6;  // Right motor direction 1
 const int motor2pin2 = 7;  // Right motor direction 2
 const int speedmotor2 = 9; // Right motor speed
 
+// Ultrasonic sensor pins
+const int TRIG_PIN = 4;
+const int ECHO_PIN = 8;
+
+// LED pins for table delivery status
+const int LED_TABLE1 = 10;
+const int LED_TABLE2 = 11;
+const int LED_TABLE3 = 12;
+
+// Distance threshold (in cm)
+const int DISTANCE_THRESHOLD = 30;
+
 // Motor speed (increased for better movement)
 const int MOTOR_SPEED = 150;  // Increased to about 60% of 255
 
@@ -32,6 +44,15 @@ void setup() {
   pinMode(motor2pin2, OUTPUT);
   pinMode(speedmotor2, OUTPUT);
   
+  // Initialize ultrasonic sensor pins
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  
+  // Initialize LED pins
+  pinMode(LED_TABLE1, OUTPUT);
+  pinMode(LED_TABLE2, OUTPUT);
+  pinMode(LED_TABLE3, OUTPUT);
+  
   // Initialize serial communication
   Serial.begin(9600);
   inputString.reserve(200);
@@ -40,6 +61,45 @@ void setup() {
   Serial.println("Testing motors...");
   testMotors();
   Serial.println("Arduino initialized and ready!");
+}
+
+// Function to measure distance using ultrasonic sensor
+float measureDistance() {
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  
+  long duration = pulseIn(ECHO_PIN, HIGH);
+  float distance = duration * 0.034 / 2;
+  
+  return distance;
+}
+
+// Function to check for obstacles
+bool checkObstacle() {
+  float distance = measureDistance();
+  if (distance < DISTANCE_THRESHOLD) {
+    Serial.println("Obstacle detected!");
+    return true;
+  }
+  return false;
+}
+
+// Function to set LED status
+void setTableLED(int tableNumber, bool status) {
+  switch(tableNumber) {
+    case 1:
+      digitalWrite(LED_TABLE1, status ? HIGH : LOW);
+      break;
+    case 2:
+      digitalWrite(LED_TABLE2, status ? HIGH : LOW);
+      break;
+    case 3:
+      digitalWrite(LED_TABLE3, status ? HIGH : LOW);
+      break;
+  }
 }
 
 void testMotors() {
@@ -70,7 +130,25 @@ void loop() {
     Serial.print("Received command: ");
     Serial.println(inputString);
     
-    processMovement(inputString);
+    // Check if it's a table delivery command
+    if (inputString.startsWith("TABLE_DELIVERED:")) {
+      int tableNumber = inputString.substring(15).toInt();
+      setTableLED(tableNumber, true);
+      Serial.print("Table ");
+      Serial.print(tableNumber);
+      Serial.println(" delivery confirmed");
+    }
+    // Check if it's a food received command
+    else if (inputString.startsWith("FOOD_RECEIVED:")) {
+      int tableNumber = inputString.substring(13).toInt();
+      setTableLED(tableNumber, false);
+      Serial.print("Table ");
+      Serial.print(tableNumber);
+      Serial.println(" food received");
+    }
+    else {
+      processMovement(inputString);
+    }
     
     inputString = "";
     stringComplete = false;
@@ -101,17 +179,16 @@ void processMovement(String movement) {
   
   // Get the direction (remove any whitespace or newline)
   direction = movement.substring(i);
-  direction.trim();  // Remove any whitespace or newline characters
+  direction.trim();
   
   Serial.print("Number: ");
   Serial.print(number);
   Serial.print(", Direction: ");
   Serial.println(direction);
   
-  // Calculate total movement duration using unsigned long to prevent overflow
+  // Calculate total movement duration
   unsigned long totalDuration = (unsigned long)number * SCALE_FACTOR * MOVEMENT_DURATION;
   
-  // Limit the maximum duration
   if (totalDuration > MAX_DURATION) {
     totalDuration = MAX_DURATION;
     Serial.println("Warning: Duration capped at 5 minutes");
@@ -123,23 +200,36 @@ void processMovement(String movement) {
   
   isMoving = true;
   
-  // Execute the movement
-  if (direction == "up" || direction == "UP") {
-    Serial.println("Moving FORWARD");
-    moveForward(totalDuration);
-  } else if (direction == "down" || direction == "DOWN") {
-    Serial.println("Moving BACKWARD");
-    moveBackward(totalDuration);
-  } else if (direction == "left" || direction == "LEFT") {
-    Serial.println("Turning LEFT");
-    turnLeft(totalDuration);
-  } else if (direction == "right" || direction == "RIGHT") {
-    Serial.println("Turning RIGHT");
-    turnRight(totalDuration);
-  } else {
-    Serial.print("Invalid direction: '");
-    Serial.print(direction);
-    Serial.println("'");
+  // Execute the movement with obstacle detection
+  unsigned long startTime = millis();
+  while (millis() - startTime < totalDuration) {
+    if (checkObstacle()) {
+      stopMotors();
+      Serial.println("Movement stopped due to obstacle");
+      delay(1000); // Wait for 1 second
+      if (!checkObstacle()) {
+        // Resume movement if obstacle is cleared
+        if (direction == "up" || direction == "UP") {
+          moveForward(100);
+        } else if (direction == "down" || direction == "DOWN") {
+          moveBackward(100);
+        } else if (direction == "left" || direction == "LEFT") {
+          turnLeft(100);
+        } else if (direction == "right" || direction == "RIGHT") {
+          turnRight(100);
+        }
+      }
+    } else {
+      if (direction == "up" || direction == "UP") {
+        moveForward(100);
+      } else if (direction == "down" || direction == "DOWN") {
+        moveBackward(100);
+      } else if (direction == "left" || direction == "LEFT") {
+        turnLeft(100);
+      } else if (direction == "right" || direction == "RIGHT") {
+        turnRight(100);
+      }
+    }
   }
   
   stopMotors();
@@ -148,52 +238,44 @@ void processMovement(String movement) {
   // Send completion signal
   Serial.println("DIRECTION_DONE");
   Serial.flush();
-  delay(100);  // Small delay to ensure message is sent
+  delay(100);
 }
 
-// Update movement functions to use unsigned long for duration
+// Update movement functions to remove delay
 void moveForward(unsigned long duration) {
-  Serial.println("Executing FORWARD movement");
   digitalWrite(motor1pin1, HIGH);
   digitalWrite(motor1pin2, LOW);
   digitalWrite(motor2pin1, HIGH);
   digitalWrite(motor2pin2, LOW);
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
-  delay(duration);
 }
 
 void moveBackward(unsigned long duration) {
-  Serial.println("Executing BACKWARD movement");
   digitalWrite(motor1pin1, LOW);
   digitalWrite(motor1pin2, HIGH);
   digitalWrite(motor2pin1, LOW);
   digitalWrite(motor2pin2, HIGH);
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
-  delay(duration);
 }
 
 void turnLeft(unsigned long duration) {
-  Serial.println("Executing LEFT turn");
   digitalWrite(motor1pin1, LOW);
   digitalWrite(motor1pin2, HIGH);
   digitalWrite(motor2pin1, HIGH);
   digitalWrite(motor2pin2, LOW);
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
-  delay(duration);
 }
 
 void turnRight(unsigned long duration) {
-  Serial.println("Executing RIGHT turn");
   digitalWrite(motor1pin1, HIGH);
   digitalWrite(motor1pin2, LOW);
   digitalWrite(motor2pin1, LOW);
   digitalWrite(motor2pin2, HIGH);
   analogWrite(speedmotor1, MOTOR_SPEED);
   analogWrite(speedmotor2, MOTOR_SPEED);
-  delay(duration);
 }
 
 void stopMotors() {
