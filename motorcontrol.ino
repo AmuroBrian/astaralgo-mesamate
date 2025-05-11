@@ -121,7 +121,8 @@ void loop() {
       pathStr.trim();  // Remove any whitespace or newlines
       int pathNumber = pathStr.toInt();
       
-      if (pathNumber >= 1 && pathNumber <= 3) {  // Validate path number
+      // Validate path number
+      if (pathNumber >= 1 && pathNumber <= 3) {
         Serial.print("Path ");
         Serial.print(pathNumber);
         Serial.println(" completed - Turning ON LED");
@@ -139,8 +140,9 @@ void loop() {
             break;
         }
       } else {
-        Serial.print("Invalid path number received: ");
-        Serial.println(pathNumber);
+        Serial.print("Error: Invalid path number received: ");
+        Serial.print(pathNumber);
+        Serial.println(" (must be between 1 and 3)");
       }
     }
     // Check if it's a food received command
@@ -150,7 +152,8 @@ void loop() {
       pathStr.trim();  // Remove any whitespace or newlines
       int pathNumber = pathStr.toInt();
       
-      if (pathNumber >= 1 && pathNumber <= 3) {  // Validate path number
+      // Validate path number
+      if (pathNumber >= 1 && pathNumber <= 3) {
         Serial.print("Food received for Path ");
         Serial.print(pathNumber);
         Serial.println(" - Turning OFF LED");
@@ -168,8 +171,9 @@ void loop() {
             break;
         }
       } else {
-        Serial.print("Invalid path number received: ");
-        Serial.println(pathNumber);
+        Serial.print("Error: Invalid path number received: ");
+        Serial.print(pathNumber);
+        Serial.println(" (must be between 1 and 3)");
       }
     }
     else {

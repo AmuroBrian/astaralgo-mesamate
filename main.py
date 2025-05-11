@@ -169,22 +169,26 @@ class MesamateApp:
                 # Send path completion command to Arduino
                 if self.serial_port and self.serial_port.is_open:
                     try:
-                        command = f"PATH_COMPLETE:{path_number}\n"
-                        print(f"Sending path completion command: {command.strip()}")
-                        self.serial_port.write(command.encode())
-                        self.serial_port.flush()
-                        print(f"Sent path completion command for Path {path_number}")
-                        
-                        # Wait for acknowledgment
-                        time.sleep(0.5)
-                        
-                        # Verify LED state
-                        if path_number == 1:
-                            print("Path 1 completed - LED on pin 10 should be ON")
-                        elif path_number == 2:
-                            print("Path 2 completed - LED on pin 11 should be ON")
-                        elif path_number == 3:
-                            print("Path 3 completed - LED on pin 12 should be ON")
+                        # Ensure path number is valid (1-3)
+                        if 1 <= path_number <= 3:
+                            command = f"PATH_COMPLETE:{path_number}\n"
+                            print(f"Sending path completion command: {command.strip()}")
+                            self.serial_port.write(command.encode())
+                            self.serial_port.flush()
+                            print(f"Sent path completion command for Path {path_number}")
+                            
+                            # Wait for acknowledgment
+                            time.sleep(0.5)
+                            
+                            # Verify LED state
+                            if path_number == 1:
+                                print("Path 1 completed - LED on pin 10 should be ON")
+                            elif path_number == 2:
+                                print("Path 2 completed - LED on pin 11 should be ON")
+                            elif path_number == 3:
+                                print("Path 3 completed - LED on pin 12 should be ON")
+                        else:
+                            print(f"Warning: Invalid path number {path_number} - must be between 1 and 3")
                     except Exception as e:
                         print(f"Error sending path completion command: {e}")
                 
