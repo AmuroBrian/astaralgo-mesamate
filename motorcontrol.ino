@@ -36,7 +36,13 @@ bool stringComplete = false;
 bool isMoving = false;
 
 void setup() {
+  // Initialize serial communication first
+  Serial.begin(9600);
+  delay(1000);  // Give time for serial to initialize
+  Serial.println("\n\n=== MESAMATE INITIALIZATION ===");
+  
   // Initialize motor pins
+  Serial.println("Initializing motor pins...");
   pinMode(motor1pin1, OUTPUT);
   pinMode(motor1pin2, OUTPUT);
   pinMode(speedmotor1, OUTPUT);
@@ -45,20 +51,37 @@ void setup() {
   pinMode(speedmotor2, OUTPUT);
   
   // Initialize ultrasonic sensor pins
+  Serial.println("Initializing ultrasonic sensor pins...");
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   
   // Initialize LED pins
+  Serial.println("Initializing LED pins...");
   pinMode(LED_PATH1, OUTPUT);
   pinMode(LED_PATH2, OUTPUT);
   pinMode(LED_PATH3, OUTPUT);
   
-  // Initialize serial communication
-  Serial.begin(9600);
+  // Test LED pins individually
+  Serial.println("\nTesting LED pins individually:");
+  Serial.println("Testing LED_PATH1 (Pin 10)...");
+  digitalWrite(LED_PATH1, HIGH);
+  delay(1000);
+  digitalWrite(LED_PATH1, LOW);
+  
+  Serial.println("Testing LED_PATH2 (Pin 11)...");
+  digitalWrite(LED_PATH2, HIGH);
+  delay(1000);
+  digitalWrite(LED_PATH2, LOW);
+  
+  Serial.println("Testing LED_PATH3 (Pin 12)...");
+  digitalWrite(LED_PATH3, HIGH);
+  delay(1000);
+  digitalWrite(LED_PATH3, LOW);
+  
   inputString.reserve(200);
   
   // Test motors and LEDs on startup
-  Serial.println("Testing motors and LEDs...");
+  Serial.println("\nTesting motors and LEDs...");
   testMotors();
   testLEDs();
   Serial.println("Arduino initialized and ready!");
@@ -66,63 +89,83 @@ void setup() {
 
 // Function to test all LEDs
 void testLEDs() {
-  Serial.println("Testing LEDs...");
+  Serial.println("\n=== LED TEST SEQUENCE ===");
   
   // Turn all LEDs on
+  Serial.println("Turning all LEDs ON");
   digitalWrite(LED_PATH1, HIGH);
   digitalWrite(LED_PATH2, HIGH);
   digitalWrite(LED_PATH3, HIGH);
-  Serial.println("All LEDs ON");
-  delay(1000);
+  delay(2000);
   
   // Turn all LEDs off
+  Serial.println("Turning all LEDs OFF");
   digitalWrite(LED_PATH1, LOW);
   digitalWrite(LED_PATH2, LOW);
   digitalWrite(LED_PATH3, LOW);
-  Serial.println("All LEDs OFF");
   delay(1000);
   
-  // Test each LED individually
-  Serial.println("Testing LED 1");
+  // Test each LED individually with longer duration
+  Serial.println("\nTesting individual LEDs:");
+  
+  Serial.println("Testing LED 1 (Pin 10)");
   digitalWrite(LED_PATH1, HIGH);
-  delay(500);
+  delay(2000);
   digitalWrite(LED_PATH1, LOW);
+  delay(1000);
   
-  Serial.println("Testing LED 2");
+  Serial.println("Testing LED 2 (Pin 11)");
   digitalWrite(LED_PATH2, HIGH);
-  delay(500);
+  delay(2000);
   digitalWrite(LED_PATH2, LOW);
+  delay(1000);
   
-  Serial.println("Testing LED 3");
+  Serial.println("Testing LED 3 (Pin 12)");
   digitalWrite(LED_PATH3, HIGH);
-  delay(500);
+  delay(2000);
   digitalWrite(LED_PATH3, LOW);
+  delay(1000);
+  
+  Serial.println("LED test sequence completed");
 }
 
 void loop() {
   if (stringComplete) {
-    Serial.print("Received command: ");
+    Serial.print("\nReceived command: ");
     Serial.println(inputString);
     
     // Check if it's a test LEDs command
     if (inputString.startsWith("TEST_LEDS")) {
+      Serial.println("Executing LED test sequence...");
       testLEDs();
     }
     // Check if it's a path completion command
     else if (inputString.startsWith("PATH_COMPLETE:")) {
       int pathNumber = inputString.substring(13).toInt();
+      Serial.print("Processing path completion for Path ");
+      Serial.println(pathNumber);
+      
+      // Turn off all LEDs first
+      digitalWrite(LED_PATH1, LOW);
+      digitalWrite(LED_PATH2, LOW);
+      digitalWrite(LED_PATH3, LOW);
+      delay(100);  // Small delay to ensure LEDs are off
+      
+      // Turn on the appropriate LED
       setPathLED(pathNumber, true);
+      
+      // Send acknowledgment
       Serial.print("Path ");
       Serial.print(pathNumber);
-      Serial.println(" completed");
+      Serial.println(" LED activated");
+      Serial.flush();
     }
     // Check if it's a food received command
     else if (inputString.startsWith("FOOD_RECEIVED:")) {
       int pathNumber = inputString.substring(13).toInt();
+      Serial.print("Processing food received for Path ");
+      Serial.println(pathNumber);
       setPathLED(pathNumber, false);
-      Serial.print("Path ");
-      Serial.print(pathNumber);
-      Serial.println(" food received");
     }
     else {
       processMovement(inputString);
@@ -245,7 +288,7 @@ bool checkObstacle() {
 
 // Function to set LED status based on path number
 void setPathLED(int pathNumber, bool status) {
-  Serial.print("Setting Path ");
+  Serial.print("\nSetting Path ");
   Serial.print(pathNumber);
   Serial.print(" LED to ");
   Serial.println(status ? "ON" : "OFF");
@@ -253,12 +296,35 @@ void setPathLED(int pathNumber, bool status) {
   switch(pathNumber) {
     case 1:
       digitalWrite(LED_PATH1, status ? HIGH : LOW);
+      Serial.print("LED_PATH1 (Pin 10) set to ");
+      Serial.println(status ? "HIGH" : "LOW");
       break;
     case 2:
       digitalWrite(LED_PATH2, status ? HIGH : LOW);
+      Serial.print("LED_PATH2 (Pin 11) set to ");
+      Serial.println(status ? "HIGH" : "LOW");
       break;
     case 3:
       digitalWrite(LED_PATH3, status ? HIGH : LOW);
+      Serial.print("LED_PATH3 (Pin 12) set to ");
+      Serial.println(status ? "HIGH" : "LOW");
+      break;
+  }
+  
+  // Verify LED state
+  delay(100);  // Small delay to ensure LED state is stable
+  Serial.print("Verifying LED state - Path ");
+  Serial.print(pathNumber);
+  Serial.print(" LED is ");
+  switch(pathNumber) {
+    case 1:
+      Serial.println(digitalRead(LED_PATH1) == HIGH ? "ON" : "OFF");
+      break;
+    case 2:
+      Serial.println(digitalRead(LED_PATH2) == HIGH ? "ON" : "OFF");
+      break;
+    case 3:
+      Serial.println(digitalRead(LED_PATH3) == HIGH ? "ON" : "OFF");
       break;
   }
 }

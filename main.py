@@ -170,9 +170,21 @@ class MesamateApp:
                     try:
                         path_number = self.current_path_index + 1
                         command = f"PATH_COMPLETE:{path_number}\n"
+                        print(f"Sending path completion command: {command.strip()}")
                         self.serial_port.write(command.encode())
                         self.serial_port.flush()
                         print(f"Sent path completion command for Path {path_number}")
+                        
+                        # Wait for acknowledgment
+                        time.sleep(0.5)
+                        
+                        # Verify LED state
+                        if path_number == 1:
+                            print("Path 1 completed - LED on pin 10 should be ON")
+                        elif path_number == 2:
+                            print("Path 2 completed - LED on pin 11 should be ON")
+                        elif path_number == 3:
+                            print("Path 3 completed - LED on pin 12 should be ON")
                     except Exception as e:
                         print(f"Error sending path completion command: {e}")
                 
@@ -863,6 +875,63 @@ class MesamateApp:
             is_bold=True
         )
         okay_btn_frame.pack(pady=10)
+        
+        # Show completion popup
+        self.show_completion_popup()
+        
+    def show_completion_popup(self):
+        # Create a new window for completion message
+        popup = tk.Toplevel(self.root)
+        popup.title("Order Completion")
+        popup.geometry("400x200")
+        popup.configure(bg=self.theme_color)
+        
+        # Make window modal
+        popup.transient(self.root)
+        popup.grab_set()
+        
+        # Center the window
+        self.center_window(popup)
+        
+        # Create main container
+        main_container = tk.Frame(popup, bg=self.theme_color)
+        main_container.pack(pady=20, padx=20, fill="both", expand=True)
+        
+        # Title
+        title_label = tk.Label(
+            main_container,
+            text="Orders Completed!",
+            font=("Helvetica", 16, "bold"),
+            bg=self.theme_color,
+            fg=self.text_color
+        )
+        title_label.pack(pady=(0, 20))
+        
+        # Message
+        message_label = tk.Label(
+            main_container,
+            text="All orders have been successfully delivered.",
+            font=("Helvetica", 12),
+            bg=self.theme_color,
+            fg=self.text_color,
+            wraplength=350
+        )
+        message_label.pack(pady=10)
+        
+        # OKAY button
+        okay_btn = self.create_rounded_button(
+            main_container,
+            "OKAY",
+            lambda: [popup.destroy(), self.show_table_selection(None)],
+            width=15,
+            height=2,
+            font_size=14,
+            is_bold=True
+        )
+        okay_btn.pack(pady=20)
+        
+        # Wait for window to be closed
+        self.root.wait_window(popup)
 
     def confirm_delivery(self, table):
         # Create a new window for food delivery confirmation
