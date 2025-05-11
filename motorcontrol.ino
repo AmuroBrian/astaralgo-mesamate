@@ -57,78 +57,46 @@ void setup() {
   Serial.begin(9600);
   inputString.reserve(200);
   
-  // Test motors on startup
-  Serial.println("Testing motors...");
+  // Test motors and LEDs on startup
+  Serial.println("Testing motors and LEDs...");
   testMotors();
+  testLEDs();
   Serial.println("Arduino initialized and ready!");
 }
 
-// Function to measure distance using ultrasonic sensor
-float measureDistance() {
-  digitalWrite(TRIG_PIN, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
+// Function to test all LEDs
+void testLEDs() {
+  Serial.println("Testing LEDs...");
   
-  long duration = pulseIn(ECHO_PIN, HIGH);
-  float distance = duration * 0.034 / 2;
+  // Turn all LEDs on
+  digitalWrite(LED_PATH1, HIGH);
+  digitalWrite(LED_PATH2, HIGH);
+  digitalWrite(LED_PATH3, HIGH);
+  Serial.println("All LEDs ON");
+  delay(1000);
   
-  return distance;
-}
-
-// Function to check for obstacles
-bool checkObstacle() {
-  float distance = measureDistance();
-  if (distance < DISTANCE_THRESHOLD) {
-    Serial.println("Obstacle detected!");
-    return true;
-  }
-  return false;
-}
-
-// Function to set LED status based on path number
-void setPathLED(int pathNumber, bool status) {
-  switch(pathNumber) {
-    case 1:
-      digitalWrite(LED_PATH1, status ? HIGH : LOW);
-      Serial.print("Path 1 LED: ");
-      Serial.println(status ? "ON" : "OFF");
-      break;
-    case 2:
-      digitalWrite(LED_PATH2, status ? HIGH : LOW);
-      Serial.print("Path 2 LED: ");
-      Serial.println(status ? "ON" : "OFF");
-      break;
-    case 3:
-      digitalWrite(LED_PATH3, status ? HIGH : LOW);
-      Serial.print("Path 3 LED: ");
-      Serial.println(status ? "ON" : "OFF");
-      break;
-  }
-}
-
-void testMotors() {
-  // Test each direction briefly
-  Serial.println("Testing FORWARD");
-  moveForward(500);
-  stopMotors();
+  // Turn all LEDs off
+  digitalWrite(LED_PATH1, LOW);
+  digitalWrite(LED_PATH2, LOW);
+  digitalWrite(LED_PATH3, LOW);
+  Serial.println("All LEDs OFF");
+  delay(1000);
+  
+  // Test each LED individually
+  Serial.println("Testing LED 1");
+  digitalWrite(LED_PATH1, HIGH);
   delay(500);
+  digitalWrite(LED_PATH1, LOW);
   
-  Serial.println("Testing BACKWARD");
-  moveBackward(500);
-  stopMotors();
+  Serial.println("Testing LED 2");
+  digitalWrite(LED_PATH2, HIGH);
   delay(500);
+  digitalWrite(LED_PATH2, LOW);
   
-  Serial.println("Testing LEFT");
-  turnLeft(500);
-  stopMotors();
+  Serial.println("Testing LED 3");
+  digitalWrite(LED_PATH3, HIGH);
   delay(500);
-  
-  Serial.println("Testing RIGHT");
-  turnRight(500);
-  stopMotors();
-  delay(500);
+  digitalWrite(LED_PATH3, LOW);
 }
 
 void loop() {
@@ -136,8 +104,12 @@ void loop() {
     Serial.print("Received command: ");
     Serial.println(inputString);
     
+    // Check if it's a test LEDs command
+    if (inputString.startsWith("TEST_LEDS")) {
+      testLEDs();
+    }
     // Check if it's a path completion command
-    if (inputString.startsWith("PATH_COMPLETE:")) {
+    else if (inputString.startsWith("PATH_COMPLETE:")) {
       int pathNumber = inputString.substring(13).toInt();
       setPathLED(pathNumber, true);
       Serial.print("Path ");
@@ -245,6 +217,73 @@ void processMovement(String movement) {
   Serial.println("DIRECTION_DONE");
   Serial.flush();
   delay(100);
+}
+
+// Function to measure distance using ultrasonic sensor
+float measureDistance() {
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  
+  long duration = pulseIn(ECHO_PIN, HIGH);
+  float distance = duration * 0.034 / 2;
+  
+  return distance;
+}
+
+// Function to check for obstacles
+bool checkObstacle() {
+  float distance = measureDistance();
+  if (distance < DISTANCE_THRESHOLD) {
+    Serial.println("Obstacle detected!");
+    return true;
+  }
+  return false;
+}
+
+// Function to set LED status based on path number
+void setPathLED(int pathNumber, bool status) {
+  Serial.print("Setting Path ");
+  Serial.print(pathNumber);
+  Serial.print(" LED to ");
+  Serial.println(status ? "ON" : "OFF");
+  
+  switch(pathNumber) {
+    case 1:
+      digitalWrite(LED_PATH1, status ? HIGH : LOW);
+      break;
+    case 2:
+      digitalWrite(LED_PATH2, status ? HIGH : LOW);
+      break;
+    case 3:
+      digitalWrite(LED_PATH3, status ? HIGH : LOW);
+      break;
+  }
+}
+
+void testMotors() {
+  // Test each direction briefly
+  Serial.println("Testing FORWARD");
+  moveForward(500);
+  stopMotors();
+  delay(500);
+  
+  Serial.println("Testing BACKWARD");
+  moveBackward(500);
+  stopMotors();
+  delay(500);
+  
+  Serial.println("Testing LEFT");
+  turnLeft(500);
+  stopMotors();
+  delay(500);
+  
+  Serial.println("Testing RIGHT");
+  turnRight(500);
+  stopMotors();
+  delay(500);
 }
 
 // Update movement functions to remove delay

@@ -176,6 +176,10 @@ class MesamateApp:
                     except Exception as e:
                         print(f"Error sending path completion command: {e}")
                 
+                # Show food delivery confirmation for current table
+                current_table = self.selected_tables[self.current_path_index]
+                self.show_food_delivery_confirmation(current_table)
+                
                 self.current_path_index += 1
                 self.current_direction_index = 0
                 
@@ -330,7 +334,7 @@ class MesamateApp:
         # Create a new window for table selection
         self.selection_window = tk.Toplevel(self.root)
         self.selection_window.title("Select Tables")
-        self.selection_window.geometry("400x480")  # Reduced size for 10.1-inch display
+        self.selection_window.geometry("400x480")
         self.selection_window.configure(bg=self.theme_color)
         
         # Center the window
@@ -342,37 +346,48 @@ class MesamateApp:
         
         # Create main container
         main_container = tk.Frame(self.selection_window, bg=self.theme_color)
-        main_container.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)  # Reduced padding
+        main_container.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         
         # Create title label
         title_label = tk.Label(
             main_container,
             text="Select Customer's Table",
-            font=("Helvetica", 20, "bold"),  # Reduced font size
+            font=("Helvetica", 20, "bold"),
             bg=self.theme_color,
             fg=self.text_color
         )
-        title_label.pack(pady=10)  # Reduced padding
+        title_label.pack(pady=10)
         
         # Create frame for buttons
         button_frame = tk.Frame(main_container, bg=self.theme_color)
-        button_frame.pack(pady=10, fill="x")  # Reduced padding
+        button_frame.pack(pady=10, fill="x")
         
         # Create table buttons with custom style
-        self.table_buttons = {}  # Store button references
+        self.table_buttons = {}
         for table in ['table1', 'table2', 'table3', 'table4']:
             btn_frame = self.create_rounded_button(
                 button_frame,
                 f"Table {table[-1]}",
                 lambda t=table: self.select_table(t)
             )
-            # Store button reference
             self.table_buttons[table] = btn_frame
             btn_frame.pack(pady=10)
-            
+        
         # Create control buttons frame
         control_frame = tk.Frame(main_container, bg=self.theme_color)
         control_frame.pack(pady=20, fill="x")
+        
+        # Test LEDs button
+        test_leds_btn_frame = self.create_rounded_button(
+            control_frame,
+            "Test LEDs",
+            self.test_leds,
+            width=15,
+            height=2,
+            font_size=12,
+            is_bold=True
+        )
+        test_leds_btn_frame.pack(side=tk.LEFT, padx=10, expand=True)
         
         # Start button
         start_btn_frame = self.create_rounded_button(
@@ -850,11 +865,15 @@ class MesamateApp:
         okay_btn_frame.pack(pady=10)
 
     def confirm_delivery(self, table):
-        # Create a new window for delivery confirmation
+        # Create a new window for food delivery confirmation
         confirm_window = tk.Toplevel(self.root)
-        confirm_window.title("Delivery Confirmation")
+        confirm_window.title("Food Delivery Confirmation")
         confirm_window.geometry("400x300")
         confirm_window.configure(bg=self.theme_color)
+        
+        # Make window modal
+        confirm_window.transient(self.root)
+        confirm_window.grab_set()
         
         # Center the window
         self.center_window(confirm_window)
@@ -962,6 +981,84 @@ class MesamateApp:
         
         # Exit the program
         exit()
+
+    def test_leds(self):
+        if self.serial_port and self.serial_port.is_open:
+            try:
+                self.serial_port.write(b"TEST_LEDS\n")
+                self.serial_port.flush()
+                print("Sent LED test command")
+            except Exception as e:
+                print(f"Error sending LED test command: {e}")
+                messagebox.showerror("Error", "Failed to send LED test command")
+
+    def show_food_delivery_confirmation(self, table):
+        # Create a new window for food delivery confirmation
+        confirm_window = tk.Toplevel(self.root)
+        confirm_window.title("Food Delivery Confirmation")
+        confirm_window.geometry("400x300")
+        confirm_window.configure(bg=self.theme_color)
+        
+        # Make window modal
+        confirm_window.transient(self.root)
+        confirm_window.grab_set()
+        
+        # Center the window
+        self.center_window(confirm_window)
+        
+        # Create main container
+        main_container = tk.Frame(confirm_window, bg=self.theme_color)
+        main_container.pack(pady=20, padx=20, fill="both", expand=True)
+        
+        # Title
+        title_label = tk.Label(
+            main_container,
+            text="Food Delivery Confirmation",
+            font=("Helvetica", 16, "bold"),
+            bg=self.theme_color,
+            fg=self.text_color
+        )
+        title_label.pack(pady=(0, 20))
+        
+        # Message
+        message_label = tk.Label(
+            main_container,
+            text=f"Has the food been received by the customer at Table {table[-1]}?",
+            font=("Helvetica", 12),
+            bg=self.theme_color,
+            fg=self.text_color,
+            wraplength=350
+        )
+        message_label.pack(pady=10)
+        
+        # Button frame
+        button_frame = tk.Frame(main_container, bg=self.theme_color)
+        button_frame.pack(pady=20)
+        
+        # Yes button
+        yes_btn = self.create_rounded_button(
+            button_frame,
+            "Yes, Received",
+            lambda: self.handle_food_received(table, confirm_window),
+            width=15,
+            height=1,
+            font_size=12
+        )
+        yes_btn.pack(side=tk.LEFT, padx=10)
+        
+        # No button
+        no_btn = self.create_rounded_button(
+            button_frame,
+            "No, Not Yet",
+            confirm_window.destroy,
+            width=15,
+            height=1,
+            font_size=12
+        )
+        no_btn.pack(side=tk.LEFT, padx=10)
+        
+        # Wait for window to be closed
+        self.root.wait_window(confirm_window)
 
 def main():
     root = tk.Tk()
