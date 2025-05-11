@@ -22,7 +22,7 @@ class MesamateApp:
     def __init__(self, root):
         self.root = root
         self.root.title("MESAMATE")
-        self.root.geometry("800x600")
+        self.root.geometry("800x480")  # Reduced height for 10.1-inch display
         
         # Set theme colors
         self.theme_color = "#fffa82"
@@ -84,61 +84,77 @@ class MesamateApp:
                 try:
                     if self.serial_port.in_waiting:
                         response = self.serial_port.readline().decode().strip()
-                        if response == "PATH_DONE":
-                            self.root.after(0, self.process_next_path)
+                        if response == "DIRECTION_DONE":
+                            self.root.after(0, self.process_next_direction)
                 except Exception as e:
                     print(f"Error reading from serial port: {e}")
             time.sleep(0.1)
             
-    def send_path_to_arduino(self, directions):
+    def send_direction_to_arduino(self, direction):
         if self.serial_port and self.serial_port.is_open:
             try:
-                # Convert directions to string format
-                path_str = ",".join(directions) + "\n"
-                self.serial_port.write(path_str.encode())
-                print(f"Sent to Arduino: {path_str.strip()}")
+                # Send single direction
+                direction_str = direction + "\n"
+                self.serial_port.write(direction_str.encode())
+                print(f"Sent to Arduino: {direction_str.strip()}")
             except Exception as e:
                 print(f"Error sending to Arduino: {e}")
-                messagebox.showerror("Communication Error", "Failed to send path to Arduino")
+                messagebox.showerror("Communication Error", "Failed to send direction to Arduino")
                 
-    def process_next_path(self):
+    def process_next_direction(self):
         if not self.processing_path and self.current_path_index < len(self.paths_to_process):
-            self.processing_path = True
             current_path = self.paths_to_process[self.current_path_index]
             
-            # Send path to Arduino
-            self.send_path_to_arduino(current_path['directions'])
-            
-            # Clear the previous path and redraw the base image
-            self.ax.clear()
-            self.ax.imshow(self.binary_array, cmap='gray')
-            
-            # Redraw all station points and labels
-            for station_name, coords in STATIONS.items():
-                self.ax.scatter(coords[1], coords[0], c='blue', s=100)
-                self.ax.text(coords[1], coords[0] - 10, f"Table {station_name[-1]}", 
-                            ha='center', va='bottom', color='blue', fontsize=10)
-            
-            # Redraw initial position
-            initial_position = (0, self.binary_array.shape[1] // 2)
-            self.ax.scatter(initial_position[1], initial_position[0], c='green', s=100)
-            self.ax.text(initial_position[1], initial_position[0] - 10, "Initial Position",
-                        ha='center', va='bottom', color='green', fontsize=10)
-            
-            # Draw the current path
-            path = current_path['path']
-            path_x = [p[1] for p in path]
-            path_y = [p[0] for p in path]
-            self.ax.plot(path_x, path_y, c='red', linewidth=2)
-            self.canvas.draw()
-            
-            self.current_path_index += 1
-            self.processing_path = False
-            
-            if self.current_path_index >= len(self.paths_to_process):
-                # All paths processed, show completion message
-                self.show_completion_message()
+            if not hasattr(self, 'current_direction_index'):
+                self.current_direction_index = 0
                 
+            if self.current_direction_index < len(current_path['directions']):
+                # Get current direction
+                current_direction = current_path['directions'][self.current_direction_index]
+                
+                # Send direction to Arduino
+                self.send_direction_to_arduino(current_direction)
+                
+                # Clear the previous path and redraw the base image
+                self.ax.clear()
+                self.ax.imshow(self.binary_array, cmap='gray')
+                
+                # Redraw all station points and labels
+                for station_name, coords in STATIONS.items():
+                    self.ax.scatter(coords[1], coords[0], c='blue', s=100)
+                    self.ax.text(coords[1], coords[0] - 10, f"Table {station_name[-1]}", 
+                                ha='center', va='bottom', color='blue', fontsize=10)
+                
+                # Redraw initial position
+                initial_position = (0, self.binary_array.shape[1] // 2)
+                self.ax.scatter(initial_position[1], initial_position[0], c='green', s=100)
+                self.ax.text(initial_position[1], initial_position[0] - 10, "Initial Position",
+                            ha='center', va='bottom', color='green', fontsize=10)
+                
+                # Draw the current path up to this direction
+                path = current_path['path']
+                path_x = [p[1] for p in path]
+                path_y = [p[0] for p in path]
+                self.ax.plot(path_x, path_y, c='red', linewidth=2)
+                self.canvas.draw()
+                
+                # Move to next direction
+                self.current_direction_index += 1
+                
+            else:
+                # All directions for current path completed
+                print(f"Path {self.current_path_index + 1} completed")
+                self.current_path_index += 1
+                self.current_direction_index = 0
+                
+                if self.current_path_index >= len(self.paths_to_process):
+                    # All paths processed, show completion message
+                    print("All orders have been completed!")
+                    self.show_completion_message()
+                else:
+                    # Process next path
+                    self.process_next_direction()
+            
     def create_welcome_screen(self):
         # Clear any existing widgets
         for widget in self.root.winfo_children():
@@ -186,15 +202,15 @@ class MesamateApp:
         try:
             # Use PIL for better image handling
             logo_img = Image.open("mesamatelogo.png")
-            # Calculate new size (reduce by 50%)
-            new_width = logo_img.width // 2
-            new_height = logo_img.height // 2
+            # Calculate new size (reduce by 70% for smaller display)
+            new_width = int(logo_img.width * 0.3)
+            new_height = int(logo_img.height * 0.3)
             logo_img = logo_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
             logo_image = ImageTk.PhotoImage(logo_img)
             # Add logo to canvas
             canvas.create_image(
                 screen_width // 2,
-                screen_height * 0.4,
+                screen_height * 0.35,  # Moved up slightly
                 image=logo_image,
                 anchor="center"
             )
@@ -204,9 +220,9 @@ class MesamateApp:
             # Fallback to text logo
             canvas.create_text(
                 screen_width // 2,
-                screen_height * 0.4,
+                screen_height * 0.35,  # Moved up slightly
                 text="MESAMATE",
-                font=("Helvetica", 48, "bold"),
+                font=("Helvetica", 36, "bold"),  # Reduced font size
                 fill="black",
                 anchor="center"
             )
@@ -214,9 +230,9 @@ class MesamateApp:
         # Create click instruction label with bold and italic
         canvas.create_text(
             screen_width // 2,
-            screen_height * 0.95,
+            screen_height * 0.85,  # Moved up to ensure visibility
             text="Click Anywhere to Begin",
-            font=("Helvetica", 16, "bold italic"),
+            font=("Helvetica", 14, "bold italic"),  # Reduced font size
             fill="black",
             anchor="center"
         )
@@ -235,13 +251,13 @@ class MesamateApp:
                     pass
         self.root.bind("<Escape>", exit_fullscreen)
         
-    def create_rounded_button(self, parent, text, command, width=20, height=2, font_size=12, is_bold=False):
+    def create_rounded_button(self, parent, text, command, width=15, height=1, font_size=10, is_bold=False):  # Reduced sizes
         # Create a frame for the button
         button_frame = tk.Frame(
             parent,
             bg=self.theme_color,
-            padx=2,
-            pady=2
+            padx=1,
+            pady=1
         )
         
         # Create the actual button
@@ -281,7 +297,7 @@ class MesamateApp:
         # Create a new window for table selection
         self.selection_window = tk.Toplevel(self.root)
         self.selection_window.title("Select Tables")
-        self.selection_window.geometry("500x600")
+        self.selection_window.geometry("400x480")  # Reduced size for 10.1-inch display
         self.selection_window.configure(bg=self.theme_color)
         
         # Center the window
@@ -293,21 +309,21 @@ class MesamateApp:
         
         # Create main container
         main_container = tk.Frame(self.selection_window, bg=self.theme_color)
-        main_container.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
+        main_container.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)  # Reduced padding
         
         # Create title label
         title_label = tk.Label(
             main_container,
             text="Select Customer's Table",
-            font=("Helvetica", 24, "bold"),
+            font=("Helvetica", 20, "bold"),  # Reduced font size
             bg=self.theme_color,
             fg=self.text_color
         )
-        title_label.pack(pady=20)
+        title_label.pack(pady=10)  # Reduced padding
         
         # Create frame for buttons
         button_frame = tk.Frame(main_container, bg=self.theme_color)
-        button_frame.pack(pady=20, fill="x")
+        button_frame.pack(pady=10, fill="x")  # Reduced padding
         
         # Create table buttons with custom style
         self.table_buttons = {}  # Store button references
@@ -729,22 +745,22 @@ class MesamateApp:
             print(f"Directions: {directions}")
         
         # Start processing the first path
-        self.process_next_path()
+        self.process_next_direction()
         
     def show_completion_message(self):
         # Create completion message frame
         completion_frame = tk.Frame(self.root, bg=self.theme_color)
-        completion_frame.pack(pady=20)
+        completion_frame.pack(pady=10)  # Reduced padding
         
         # Completion message
         completion_label = tk.Label(
             completion_frame,
             text="ALL ORDERS HAVE BEEN DELIVERED",
-            font=("Helvetica", 20, "bold"),
+            font=("Helvetica", 16, "bold"),  # Reduced font size
             bg=self.theme_color,
             fg=self.text_color
         )
-        completion_label.pack(pady=(0, 20))
+        completion_label.pack(pady=(0, 10))  # Reduced padding
         
         # OKAY button
         okay_btn_frame = self.create_rounded_button(
