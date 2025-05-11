@@ -32,15 +32,19 @@ class MesamateApp:
         # Initialize serial communication
         try:
             # Try different possible serial ports for Raspberry Pi
-            possible_ports = ['/dev/ttyUSB0', '/dev/ttyACM0', '/dev/ttyAMA0']
+            possible_ports = ['/dev/ttyACM0', '/dev/ttyUSB0', '/dev/ttyAMA0']
             self.serial_port = None
             
             for port in possible_ports:
                 try:
+                    print(f"Attempting to connect to {port}...")
                     self.serial_port = serial.Serial(port, 9600, timeout=1)
+                    # Wait for Arduino to reset
+                    time.sleep(2)
                     print(f"Successfully connected to {port}")
                     break
-                except:
+                except Exception as e:
+                    print(f"Failed to connect to {port}: {str(e)}")
                     continue
                     
             if self.serial_port is None:
@@ -48,6 +52,14 @@ class MesamateApp:
                 
             self.serial_thread = threading.Thread(target=self.serial_listener, daemon=True)
             self.serial_thread.start()
+            
+            # Test communication
+            self.serial_port.write(b"test\n")
+            time.sleep(0.1)
+            if self.serial_port.in_waiting:
+                response = self.serial_port.readline().decode().strip()
+                print(f"Arduino response: {response}")
+                
         except Exception as e:
             print(f"Error initializing serial port: {e}")
             messagebox.showerror("Serial Error", 
