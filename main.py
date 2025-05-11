@@ -96,6 +96,7 @@ class MesamateApp:
                 try:
                     if self.serial_port.in_waiting:
                         response = self.serial_port.readline().decode().strip()
+                        print(f"Received from Arduino: {response}")  # Debug print
                         if response == "DIRECTION_DONE":
                             self.root.after(0, self.process_next_direction)
                 except Exception as e:
@@ -109,6 +110,8 @@ class MesamateApp:
                 direction_str = direction + "\n"
                 self.serial_port.write(direction_str.encode())
                 print(f"Sent to Arduino: {direction_str.strip()}")
+                # Flush to ensure the data is sent immediately
+                self.serial_port.flush()
             except Exception as e:
                 print(f"Error sending to Arduino: {e}")
                 messagebox.showerror("Communication Error", "Failed to send direction to Arduino")

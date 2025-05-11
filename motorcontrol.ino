@@ -18,6 +18,7 @@ const int MOVEMENT_DURATION = 200;
 // Buffer for receiving serial data
 String inputString = "";
 bool stringComplete = false;
+bool isMoving = false;
 
 void setup() {
   // Initialize motor pins
@@ -70,8 +71,6 @@ void loop() {
     
     inputString = "";
     stringComplete = false;
-    
-    Serial.println("DIRECTION_DONE");
   }
 }
 
@@ -108,6 +107,8 @@ void processMovement(String movement) {
   Serial.print(totalDuration);
   Serial.println("ms");
   
+  isMoving = true;
+  
   if (direction == "up") {
     Serial.println("Moving FORWARD");
     moveForward(totalDuration);
@@ -125,10 +126,15 @@ void processMovement(String movement) {
   }
   
   stopMotors();
-  Serial.println("Motors stopped");
+  isMoving = false;
+  
+  // Send completion signal
+  Serial.println("DIRECTION_DONE");
+  // Ensure the message is sent
+  Serial.flush();
 }
 
-// New movement functions with clearer naming
+// Movement functions
 void moveForward(int duration) {
   Serial.println("Executing FORWARD movement");
   // Left motor forward
