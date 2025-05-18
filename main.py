@@ -170,6 +170,8 @@ class MesamateApp:
                     # Show food delivery confirmation for current table
                     if self.current_path_index < len(self.selected_tables):
                         current_table = self.selected_tables[self.current_path_index]
+                        # Set processing flag to prevent multiple confirmations
+                        self.processing_path = True
                         # Wait for a short delay to ensure the path is visually completed
                         self.root.after(2000, lambda: self.confirm_delivery(current_table))
                     else:
@@ -1023,6 +1025,9 @@ class MesamateApp:
             # Close the confirmation window
             window.destroy()
             
+            # Reset processing flag
+            self.processing_path = False
+            
             # Move to next path
             self.current_path_index += 1
             self.current_direction_index = 0
@@ -1048,6 +1053,8 @@ class MesamateApp:
                 window.destroy()
             except:
                 pass
+            # Reset processing flag
+            self.processing_path = False
 
     def handle_not_received(self, window):
         try:
@@ -1064,6 +1071,9 @@ class MesamateApp:
             
             # Close the confirmation window
             window.destroy()
+            
+            # Reset processing flag
+            self.processing_path = False
             
             # Move to next path
             self.current_path_index += 1
@@ -1090,6 +1100,8 @@ class MesamateApp:
                 window.destroy()
             except:
                 pass
+            # Reset processing flag
+            self.processing_path = False
 
     def reset_and_return_to_welcome(self):
         # Clear the selected tables array
