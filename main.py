@@ -699,7 +699,20 @@ class MesamateApp:
         image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
         if image is None:
             raise ValueError("Image not found or could not be loaded.")
+            
+        print(f"\nImage Processing Debug:")
+        print(f"Original image dimensions: {image.shape}")
+        print(f"Image min value: {image.min()}")
+        print(f"Image max value: {image.max()}")
+        
         _, binary_image = cv2.threshold(image, threshold, 1, cv2.THRESH_BINARY_INV)
+        
+        print(f"Binary image dimensions: {binary_image.shape}")
+        print(f"Binary image min value: {binary_image.min()}")
+        print(f"Binary image max value: {binary_image.max()}")
+        print(f"Number of white pixels (1s): {np.sum(binary_image == 1)}")
+        print(f"Number of black pixels (0s): {np.sum(binary_image == 0)}")
+        
         return binary_image
         
     def heuristic(self, a, b):
@@ -707,6 +720,27 @@ class MesamateApp:
         
     def a_star_search(self, grid, start, goal):
         rows, cols = grid.shape
+        print(f"\nA* Search Debug:")
+        print(f"Grid dimensions: {rows}x{cols}")
+        print(f"Start position: {start}")
+        print(f"Goal position: {goal}")
+        
+        # Validate coordinates
+        if not (0 <= start[0] < rows and 0 <= start[1] < cols):
+            print(f"ERROR: Start position {start} is out of bounds")
+            return []
+        if not (0 <= goal[0] < rows and 0 <= goal[1] < cols):
+            print(f"ERROR: Goal position {goal} is out of bounds")
+            return []
+            
+        # Check if start or goal is blocked
+        if grid[start] != 0:
+            print(f"ERROR: Start position {start} is blocked")
+            return []
+        if grid[goal] != 0:
+            print(f"ERROR: Goal position {goal} is blocked")
+            return []
+            
         open_set = []
         heapq.heappush(open_set, (0, start))
         came_from = {}
@@ -722,6 +756,7 @@ class MesamateApp:
                     current = came_from[current]
                 path.append(start)
                 path.reverse()
+                print(f"Path found with length: {len(path)}")
                 return path
                 
             neighbors = [(0,1), (1,0), (0,-1), (-1,0)]
@@ -734,6 +769,8 @@ class MesamateApp:
                         g_score[neighbor] = tentative_g_score
                         f_score[neighbor] = tentative_g_score + self.heuristic(neighbor, goal)
                         heapq.heappush(open_set, (f_score[neighbor], neighbor))
+        
+        print("No path found")
         return []
         
     def get_directions(self, path):
