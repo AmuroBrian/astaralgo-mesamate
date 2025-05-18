@@ -1012,7 +1012,7 @@ class MesamateApp:
         no_btn = self.create_rounded_button(
             button_frame,
             "No, Not Yet",
-            confirm_window.destroy,
+            lambda: self.handle_not_received(confirm_window),
             width=15,
             height=1,
             font_size=12
@@ -1064,6 +1064,21 @@ class MesamateApp:
             "Delivery Confirmed",
             f"Food delivery for Table {table[-1]} has been confirmed.\nThank you for using MESAMATE!"
         )
+
+    def handle_not_received(self, window):
+        # Send command to Arduino to activate buzzer
+        if self.serial_port and self.serial_port.is_open:
+            try:
+                command = "BUZZER_ON\n"
+                print("Sending buzzer activation command")
+                self.serial_port.write(command.encode())
+                self.serial_port.flush()
+                print("Sent buzzer activation command")
+            except Exception as e:
+                print(f"Error sending buzzer command: {e}")
+        
+        # Close the confirmation window
+        window.destroy()
 
     def reset_and_return_to_welcome(self):
         # Clear the selected tables array
@@ -1164,7 +1179,7 @@ class MesamateApp:
         no_btn = self.create_rounded_button(
             button_frame,
             "No, Not Yet",
-            confirm_window.destroy,
+            lambda: self.handle_not_received(confirm_window),
             width=15,
             height=1,
             font_size=12

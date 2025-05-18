@@ -2,27 +2,25 @@
 const int motor1pin1 = 2;  // Left motor direction 1
 const int motor1pin2 = 3;  // Left motor direction 2
 const int speedmotor1 = 5; // Left motor speed
-const int motor2pin1 = 6;  // Right motor direction 1
-const int motor2pin2 = 7;  // Right motor direction 2
+const int motor2pin1 = 7;  // Right motor direction 1
+const int motor2pin2 = 6;  // Right motor direction 2
 const int speedmotor2 = 9; // Right motor speed
 
 // Ultrasonic sensor pins
 const int TRIG_PIN = 4;
 const int ECHO_PIN = 8;
 
-// LED pins for table delivery status
-const int LED_PATH1 = 10;  // LED for first path
-const int LED_PATH2 = 11;  // LED for second path
-const int LED_PATH3 = 12;  // LED for third path
+// Buzzer pin
+const int BUZZER_PIN = 11;
 
 // Distance threshold (in cm)
 const int DISTANCE_THRESHOLD = 30;
 
 // Motor speed (increased for better movement)
-const int MOTOR_SPEED = 150;  // Increased to about 60% of 255
+const int MOTOR_SPEED = 80;  // Increased to about 60% of 255
 
 // Direction scaling factor
-const int SCALE_FACTOR = 1;
+const float SCALE_FACTOR = 0.15;
 
 // Movement duration (in milliseconds)
 const int MOVEMENT_DURATION = 200;
@@ -58,51 +56,16 @@ void setup() {
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   
-  // Initialize LED pins
-  Serial.println("Initializing LED pins...");
-  pinMode(LED_PATH1, OUTPUT);
-  pinMode(LED_PATH2, OUTPUT);
-  pinMode(LED_PATH3, OUTPUT);
-  
-  // Turn on all LEDs initially
-  digitalWrite(LED_PATH1, HIGH);
-  digitalWrite(LED_PATH2, HIGH);
-  digitalWrite(LED_PATH3, HIGH);
-  Serial.println("All LEDs turned ON at startup");
+  // Initialize buzzer pin
+  Serial.println("Initializing buzzer pin...");
+  pinMode(BUZZER_PIN, OUTPUT);
   
   inputString.reserve(200);
   
-  // Test motors and LEDs on startup
-  Serial.println("\nTesting motors and LEDs...");
+  // Test motors on startup
+  Serial.println("\nTesting motors...");
   testMotors();
-  testLEDs();
   Serial.println("Arduino initialized and ready!");
-}
-
-// Function to test all LEDs
-void testLEDs() {
-  Serial.println("\n=== LED TEST SEQUENCE ===");
-  
-  // Test each LED individually
-  Serial.println("Testing LED 1 (Pin 10)");
-  digitalWrite(LED_PATH1, HIGH);
-  delay(1000);
-  digitalWrite(LED_PATH1, LOW);
-  delay(500);
-  
-  Serial.println("Testing LED 2 (Pin 11)");
-  digitalWrite(LED_PATH2, HIGH);
-  delay(1000);
-  digitalWrite(LED_PATH2, LOW);
-  delay(500);
-  
-  Serial.println("Testing LED 3 (Pin 12)");
-  digitalWrite(LED_PATH3, HIGH);
-  delay(1000);
-  digitalWrite(LED_PATH3, LOW);
-  delay(500);
-  
-  Serial.println("LED test sequence completed");
 }
 
 void loop() {
@@ -110,85 +73,13 @@ void loop() {
     Serial.print("\nReceived command: ");
     Serial.println(inputString);
     
-    // Check if it's a test LEDs command
-    if (inputString.startsWith("TEST_LEDS")) {
-      Serial.println("Executing LED test sequence...");
-      testLEDs();
-    }
-    // Check if it's a path start command
-    else if (inputString.startsWith("PATH_START:")) {
-      // Extract path number after "PATH_START:"
-      String pathStr = inputString.substring(11);
-      pathStr.trim();  // Remove any whitespace or newlines
-      int pathNumber = pathStr.toInt();
-      
-      // Validate path number
-      if (pathNumber >= 1 && pathNumber <= 4) {
-        Serial.print("Starting Path ");
-        Serial.print(pathNumber);
-        Serial.println(" - Controlling LEDs");
-        
-        if (pathNumber == 4) {
-          // Path 4: Turn on all LEDs
-          Serial.println("Path 4 - Turning ON all LEDs");
-          digitalWrite(LED_PATH1, HIGH);
-          digitalWrite(LED_PATH2, HIGH);
-          digitalWrite(LED_PATH3, HIGH);
-        } else {
-          // Paths 1-3: Turn off all LEDs first, then turn on only the current path's LED
-          digitalWrite(LED_PATH1, LOW);
-          digitalWrite(LED_PATH2, LOW);
-          digitalWrite(LED_PATH3, LOW);
-          
-          // Then turn on only the current path's LED
-          switch(pathNumber) {
-            case 1:
-              digitalWrite(LED_PATH1, HIGH);  // Turn ON LED for Path 1
-              break;
-            case 2:
-              digitalWrite(LED_PATH2, HIGH);  // Turn ON LED for Path 2
-              break;
-            case 3:
-              digitalWrite(LED_PATH3, HIGH);  // Turn ON LED for Path 3
-              break;
-          }
-        }
-      } else {
-        Serial.print("Error: Invalid path number received: ");
-        Serial.print(pathNumber);
-        Serial.println(" (must be between 1 and 4)");
-      }
-    }
-    // Check if it's a food received command
-    else if (inputString.startsWith("FOOD_RECEIVED:")) {
-      // Extract path number after "FOOD_RECEIVED:"
-      String pathStr = inputString.substring(13);
-      pathStr.trim();  // Remove any whitespace or newlines
-      int pathNumber = pathStr.toInt();
-      
-      // Validate path number
-      if (pathNumber >= 1 && pathNumber <= 3) {
-        Serial.print("Food received for Path ");
-        Serial.print(pathNumber);
-        Serial.println(" - Turning OFF LED");
-        
-        // Turn off the appropriate LED
-        switch(pathNumber) {
-          case 1:
-            digitalWrite(LED_PATH1, LOW);  // Turn OFF LED for Path 1
-            break;
-          case 2:
-            digitalWrite(LED_PATH2, LOW);  // Turn OFF LED for Path 2
-            break;
-          case 3:
-            digitalWrite(LED_PATH3, LOW);  // Turn OFF LED for Path 3
-            break;
-        }
-      } else {
-        Serial.print("Error: Invalid path number received: ");
-        Serial.print(pathNumber);
-        Serial.println(" (must be between 1 and 3)");
-      }
+    // Check if it's a buzzer command
+    if (inputString.startsWith("BUZZER_ON")) {
+      Serial.println("Activating buzzer...");
+      digitalWrite(BUZZER_PIN, HIGH);
+      delay(5000);  // Wait for 5 seconds
+      digitalWrite(BUZZER_PIN, LOW);
+      Serial.println("Buzzer turned off");
     }
     else {
       processMovement(inputString);
