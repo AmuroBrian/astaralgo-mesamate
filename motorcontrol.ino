@@ -138,34 +138,45 @@ void processMovement(String movement) {
   // Execute the movement with obstacle detection
   unsigned long startTime = millis();
   
-  // First, handle the turn if needed
-  if (direction == "right" || direction == "RIGHT") {
-    Serial.println("Turning right 90 degrees");
-    turnRight(TURN_DURATION);  // Turn right for 90 degrees
-    delay(100);      // Small pause
+  // Step 1: Initial turn based on direction
+  if (direction == "left" || direction == "LEFT") {
+    Serial.println("Step 1: Turning left 90 degrees");
+    turnLeft(TURN_DURATION);
+    delay(100);
     stopMotors();
-    delay(100);      // Small pause
-  } else if (direction == "left" || direction == "LEFT") {
-    Serial.println("Turning left 90 degrees");
-    turnLeft(TURN_DURATION);   // Turn left for 90 degrees
-    delay(100);      // Small pause
+    delay(100);
+  } else if (direction == "right" || direction == "RIGHT") {
+    Serial.println("Step 1: Turning right 90 degrees");
+    turnRight(TURN_DURATION);
+    delay(100);
     stopMotors();
-    delay(100);      // Small pause
+    delay(100);
   }
   
-  // Then move forward for the specified duration
+  // Step 2: Move forward for the specified duration
+  Serial.println("Step 2: Moving forward");
   while (millis() - startTime < totalDuration) {
     if (checkObstacle()) {
       stopMotors();
       Serial.println("Movement stopped due to obstacle");
-      delay(1000); // Wait for 1 second
+      delay(1000);
       if (!checkObstacle()) {
-        // Resume movement if obstacle is cleared
         moveForward(MOTOR_SPEED);
       }
     } else {
       moveForward(MOTOR_SPEED);
     }
+  }
+  stopMotors();
+  delay(100);
+  
+  // Step 3: Final turn to face the customer
+  if (direction == "left" || direction == "LEFT") {
+    Serial.println("Step 3: Turning right to face customer");
+    turnRight(TURN_DURATION);
+  } else if (direction == "right" || direction == "RIGHT") {
+    Serial.println("Step 3: Turning left to face customer");
+    turnLeft(TURN_DURATION);
   }
   
   stopMotors();
