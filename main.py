@@ -167,8 +167,12 @@ class MesamateApp:
                     path_number = self.current_path_index + 1
                     print(f"\nPath {path_number} completed: {current_path['description']}")
                     
+                    # Check if this is the final path
+                    if self.current_path_index == len(self.paths_to_process) - 1:
+                        print("\nAll paths completed! Showing completion message...")
+                        self.root.after(2000, self.show_completion_message)
                     # Show food delivery confirmation for current table
-                    if self.current_path_index < len(self.selected_tables):
+                    elif self.current_path_index < len(self.selected_tables):
                         current_table = self.selected_tables[self.current_path_index]
                         # Set processing flag to prevent multiple confirmations
                         self.processing_path = True
@@ -1038,7 +1042,7 @@ class MesamateApp:
                 try:
                     if self.root.winfo_exists():
                         # Add a small delay before showing completion message
-                        self.root.after(1000, self.show_completion_message)
+                        self.root.after(2000, self.show_completion_message)
                 except tk.TclError:
                     print("Window was destroyed during path completion")
                     return
@@ -1086,7 +1090,7 @@ class MesamateApp:
                 try:
                     if self.root.winfo_exists():
                         # Add a small delay before showing completion message
-                        self.root.after(1000, self.show_completion_message)
+                        self.root.after(2000, self.show_completion_message)
                 except tk.TclError:
                     print("Window was destroyed during path completion")
                     return
