@@ -1043,32 +1043,41 @@ class MesamateApp:
             return
 
     def handle_food_received(self, table, window):
-        # Close the confirmation window
-        window.destroy()
-        
-        # Show success message
-        messagebox.showinfo(
-            "Delivery Confirmed",
-            f"Food delivery for Table {table[-1]} has been confirmed.\nThank you for using MESAMATE!"
-        )
-        
-        # Move to next path
-        self.current_path_index += 1
-        self.current_direction_index = 0
-        
-        if self.current_path_index >= len(self.paths_to_process):
-            # All paths processed, show completion message
-            print("\nAll orders have been completed!")
+        try:
+            # Show success message
+            messagebox.showinfo(
+                "Delivery Confirmed",
+                f"Food delivery for Table {table[-1]} has been confirmed.\nThank you for using MESAMATE!"
+            )
+            
+            # Close the confirmation window
+            window.destroy()
+            
+            # Move to next path
+            self.current_path_index += 1
+            self.current_direction_index = 0
+            
+            if self.current_path_index >= len(self.paths_to_process):
+                # All paths processed, show completion message
+                print("\nAll orders have been completed!")
+                try:
+                    if self.root.winfo_exists():
+                        self.show_completion_message()
+                except tk.TclError:
+                    print("Window was destroyed during path completion")
+                    return
+            else:
+                # Process next path
+                print(f"\nMoving to next path: {self.current_path_index + 1}")
+                self.root.after(1000, self.process_next_direction)  # Add delay before starting next path
+                
+        except Exception as e:
+            print(f"Error in handle_food_received: {e}")
+            # Ensure window is destroyed even if there's an error
             try:
-                if self.root.winfo_exists():
-                    self.show_completion_message()
-            except tk.TclError:
-                print("Window was destroyed during path completion")
-                return
-        else:
-            # Process next path
-            print(f"\nMoving to next path: {self.current_path_index + 1}")
-            self.process_next_direction()
+                window.destroy()
+            except:
+                pass
 
     def handle_not_received(self, window):
         # Send command to Arduino to activate buzzer
