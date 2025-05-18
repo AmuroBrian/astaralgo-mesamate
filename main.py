@@ -191,8 +191,12 @@ class MesamateApp:
                 if self.current_path_index >= len(self.paths_to_process):
                     # All paths processed, show completion message
                     print("\nAll orders have been completed!")
-                    if self.root.winfo_exists():
-                        self.show_completion_message()
+                    try:
+                        if self.root.winfo_exists():
+                            self.show_completion_message()
+                    except tk.TclError:
+                        print("Window was destroyed during path completion")
+                        return
                 else:
                     # Process next path
                     print(f"\nMoving to next path: {self.current_path_index + 1}")
@@ -844,7 +848,11 @@ class MesamateApp:
     def show_completion_message(self):
         try:
             # Check if root window still exists
-            if not self.root.winfo_exists():
+            try:
+                if not self.root.winfo_exists():
+                    return
+            except tk.TclError:
+                print("Window was destroyed before completion message could be shown")
                 return
                 
             # Create completion message frame
