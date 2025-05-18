@@ -191,7 +191,8 @@ class MesamateApp:
                 if self.current_path_index >= len(self.paths_to_process):
                     # All paths processed, show completion message
                     print("\nAll orders have been completed!")
-                    self.show_completion_message()
+                    if self.root.winfo_exists():
+                        self.show_completion_message()
                 else:
                     # Process next path
                     print(f"\nMoving to next path: {self.current_path_index + 1}")
