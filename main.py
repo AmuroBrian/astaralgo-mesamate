@@ -817,10 +817,13 @@ class MesamateApp:
         self.processing_path = False
         
         print("\n=== Starting Path Processing ===")
+        print(f"Grid dimensions: {rows}x{cols}")
+        print(f"Initial position: {initial_position}")
         print(f"Selected tables: {stations}")
         
         # Draw all station points with labels
         for station_name, coords in STATIONS.items():
+            print(f"Station {station_name} coordinates: {coords}")
             self.ax.scatter(coords[1], coords[0], c='blue', s=100)
             self.ax.text(coords[1], coords[0] - 10, f"Table {station_name[-1]}", 
                         ha='center', va='bottom', color='blue', fontsize=10)
@@ -833,6 +836,19 @@ class MesamateApp:
         # First path: initial position to first station
         first_station = stations[0]
         print(f"\nCalculating Path 1: Initial Position to {first_station}")
+        print(f"Start: {initial_position}")
+        print(f"Goal: {STATIONS[first_station]}")
+        
+        # Check if the path is possible
+        if not self.is_path_possible(grid, initial_position, STATIONS[first_station]):
+            print(f"ERROR: No valid path exists from initial position to {first_station}")
+            messagebox.showerror(
+                "Path Error",
+                f"Cannot find a valid path to Table {first_station[-1]}.\nPlease try a different table."
+            )
+            self.reset_and_return_to_welcome()
+            return
+            
         path = self.a_star_search(grid, initial_position, STATIONS[first_station])
         if path:
             directions = self.get_directions(path)
@@ -844,12 +860,31 @@ class MesamateApp:
             print(f"Path 1 directions: {directions}")
         else:
             print(f"ERROR: No path found for Initial Position to {first_station}")
+            messagebox.showerror(
+                "Path Error",
+                f"Cannot find a valid path to Table {first_station[-1]}.\nPlease try a different table."
+            )
+            self.reset_and_return_to_welcome()
+            return
         
         # Process paths between consecutive stations
         for i in range(len(stations) - 1):
             current_station = stations[i]
             next_station = stations[i + 1]
             print(f"\nCalculating Path {i+2}: {current_station} to {next_station}")
+            print(f"Start: {STATIONS[current_station]}")
+            print(f"Goal: {STATIONS[next_station]}")
+            
+            # Check if the path is possible
+            if not self.is_path_possible(grid, STATIONS[current_station], STATIONS[next_station]):
+                print(f"ERROR: No valid path exists from {current_station} to {next_station}")
+                messagebox.showerror(
+                    "Path Error",
+                    f"Cannot find a valid path from Table {current_station[-1]} to Table {next_station[-1]}.\nPlease try a different sequence."
+                )
+                self.reset_and_return_to_welcome()
+                return
+                
             path = self.a_star_search(grid, STATIONS[current_station], STATIONS[next_station])
             if path:
                 directions = self.get_directions(path)
@@ -861,10 +896,29 @@ class MesamateApp:
                 print(f"Path {i+2} directions: {directions}")
             else:
                 print(f"ERROR: No path found for {current_station} to {next_station}")
+                messagebox.showerror(
+                    "Path Error",
+                    f"Cannot find a valid path from Table {current_station[-1]} to Table {next_station[-1]}.\nPlease try a different sequence."
+                )
+                self.reset_and_return_to_welcome()
+                return
         
         # Final path: last station back to initial position
         last_station = stations[-1]
         print(f"\nCalculating Final Path: {last_station} to Initial Position")
+        print(f"Start: {STATIONS[last_station]}")
+        print(f"Goal: {initial_position}")
+        
+        # Check if the path is possible
+        if not self.is_path_possible(grid, STATIONS[last_station], initial_position):
+            print(f"ERROR: No valid path exists from {last_station} to initial position")
+            messagebox.showerror(
+                "Path Error",
+                f"Cannot find a valid path back from Table {last_station[-1]}.\nPlease try a different sequence."
+            )
+            self.reset_and_return_to_welcome()
+            return
+            
         path = self.a_star_search(grid, STATIONS[last_station], initial_position)
         if path:
             directions = self.get_directions(path)
@@ -876,6 +930,12 @@ class MesamateApp:
             print(f"Final path directions: {directions}")
         else:
             print(f"ERROR: No path found for {last_station} to Initial Position")
+            messagebox.showerror(
+                "Path Error",
+                f"Cannot find a valid path back from Table {last_station[-1]}.\nPlease try a different sequence."
+            )
+            self.reset_and_return_to_welcome()
+            return
         
         print("\n=== All Paths Calculated ===")
         print(f"Total paths to process: {len(self.paths_to_process)}")
@@ -883,6 +943,28 @@ class MesamateApp:
         # Start processing the first path
         self.process_next_direction()
         
+    def is_path_possible(self, grid, start, goal):
+        """Check if a path is possible between two points."""
+        rows, cols = grid.shape
+        
+        # Check if coordinates are within bounds
+        if not (0 <= start[0] < rows and 0 <= start[1] < cols):
+            print(f"Start position {start} is out of bounds")
+            return False
+        if not (0 <= goal[0] < rows and 0 <= goal[1] < cols):
+            print(f"Goal position {goal} is out of bounds")
+            return False
+            
+        # Check if start or goal is blocked
+        if grid[start] != 0:
+            print(f"Start position {start} is blocked")
+            return False
+        if grid[goal] != 0:
+            print(f"Goal position {goal} is blocked")
+            return False
+            
+        return True
+
     def show_completion_message(self):
         try:
             # Check if root window still exists
