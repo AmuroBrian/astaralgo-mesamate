@@ -9,6 +9,17 @@ import time
 import serial
 import threading
 from PIL import Image, ImageTk
+import mysql.connector
+from datetime import datetime
+
+# Database configuration
+DB_CONFIG = {
+    'host': '192.168.254.163',
+    'port': 3307,
+    'user': 'root',
+    'password': '',
+    'database': 'mesamate'
+}
 
 # Define stations and their coordinates
 STATIONS = {
@@ -1073,6 +1084,38 @@ class MesamateApp:
                     print("Sent buzzer activation command")
                 except Exception as e:
                     print(f"Error sending buzzer command: {e}")
+            
+            # Insert data into database
+            try:
+                # Create database connection
+                conn = mysql.connector.connect(**DB_CONFIG)
+                cursor = conn.cursor()
+                
+                # Prepare the data
+                table_number = self.selected_tables[self.current_path_index][-1]  # Get the table number
+                response = f"Table #{table_number} did not received order. Please assist immediately!"
+                timestamp = datetime.now()
+                
+                # Insert the data
+                query = """
+                INSERT INTO delivery_responses (table_number, response, timestamp)
+                VALUES (%s, %s, %s)
+                """
+                cursor.execute(query, (table_number, response, timestamp))
+                
+                # Commit the transaction
+                conn.commit()
+                print(f"Successfully inserted delivery response for Table {table_number}")
+                
+            except mysql.connector.Error as err:
+                print(f"Database error: {err}")
+                messagebox.showerror("Database Error", 
+                                   "Failed to record the delivery response.\nPlease contact system administrator.")
+            finally:
+                if 'cursor' in locals():
+                    cursor.close()
+                if 'conn' in locals():
+                    conn.close()
             
             # Close the confirmation window
             window.destroy()
