@@ -841,65 +841,76 @@ class MesamateApp:
         self.process_next_direction()
         
     def show_completion_message(self):
-        # Create completion message frame
-        completion_frame = tk.Frame(self.root, bg=self.theme_color)
-        completion_frame.pack(pady=10)
-        
-        # Completion message
-        completion_label = tk.Label(
-            completion_frame,
-            text="ALL ORDERS HAVE BEEN DELIVERED",
-            font=("Helvetica", 16, "bold"),
-            bg=self.theme_color,
-            fg=self.text_color
-        )
-        completion_label.pack(pady=(0, 10))
-        
-        # Create frame for delivery confirmations
-        delivery_frame = tk.Frame(completion_frame, bg=self.theme_color)
-        delivery_frame.pack(pady=10)
-        
-        # Add delivery confirmation buttons for each table
-        for table in self.selected_tables:
-            table_frame = tk.Frame(delivery_frame, bg=self.theme_color)
-            table_frame.pack(pady=5)
+        try:
+            # Check if root window still exists
+            if not self.root.winfo_exists():
+                return
+                
+            # Create completion message frame
+            completion_frame = tk.Frame(self.root, bg=self.theme_color)
+            completion_frame.pack(pady=10)
             
-            # Table label
-            table_label = tk.Label(
-                table_frame,
-                text=f"Table {table[-1]}",
-                font=("Helvetica", 12, "bold"),
+            # Completion message
+            completion_label = tk.Label(
+                completion_frame,
+                text="ALL ORDERS HAVE BEEN DELIVERED",
+                font=("Helvetica", 16, "bold"),
                 bg=self.theme_color,
                 fg=self.text_color
             )
-            table_label.pack(side=tk.LEFT, padx=10)
+            completion_label.pack(pady=(0, 10))
             
-            # Confirm delivery button
-            confirm_btn = self.create_rounded_button(
-                table_frame,
-                "Confirm Delivery",
-                lambda t=table: self.confirm_delivery(t),
+            # Create frame for delivery confirmations
+            delivery_frame = tk.Frame(completion_frame, bg=self.theme_color)
+            delivery_frame.pack(pady=10)
+            
+            # Add delivery confirmation buttons for each table
+            for table in self.selected_tables:
+                table_frame = tk.Frame(delivery_frame, bg=self.theme_color)
+                table_frame.pack(pady=5)
+                
+                # Table label
+                table_label = tk.Label(
+                    table_frame,
+                    text=f"Table {table[-1]}",
+                    font=("Helvetica", 12, "bold"),
+                    bg=self.theme_color,
+                    fg=self.text_color
+                )
+                table_label.pack(side=tk.LEFT, padx=10)
+                
+                # Confirm delivery button
+                confirm_btn = self.create_rounded_button(
+                    table_frame,
+                    "Confirm Delivery",
+                    lambda t=table: self.confirm_delivery(t),
+                    width=15,
+                    height=1,
+                    font_size=10
+                )
+                confirm_btn.pack(side=tk.LEFT, padx=10)
+            
+            # OKAY button
+            okay_btn_frame = self.create_rounded_button(
+                completion_frame,
+                "OKAY",
+                self.reset_and_return_to_welcome,
                 width=15,
-                height=1,
-                font_size=10
+                height=2,
+                font_size=14,
+                is_bold=True
             )
-            confirm_btn.pack(side=tk.LEFT, padx=10)
-        
-        # OKAY button
-        okay_btn_frame = self.create_rounded_button(
-            completion_frame,
-            "OKAY",
-            self.reset_and_return_to_welcome,
-            width=15,
-            height=2,
-            font_size=14,
-            is_bold=True
-        )
-        okay_btn_frame.pack(pady=10)
-        
-        # Show completion popup
-        self.show_completion_popup()
-        
+            okay_btn_frame.pack(pady=10)
+            
+            # Show completion popup
+            self.show_completion_popup()
+        except tk.TclError:
+            print("Window was destroyed before completion message could be shown")
+            return
+        except Exception as e:
+            print(f"Error showing completion message: {e}")
+            return
+
     def show_completion_popup(self):
         # Create a new window for completion message
         popup = tk.Toplevel(self.root)
