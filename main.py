@@ -1034,24 +1034,6 @@ class MesamateApp:
             
             # Wait for window to be closed
             self.root.wait_window(confirm_window)
-            
-            # After confirmation window is closed, move to next path
-            self.current_path_index += 1
-            self.current_direction_index = 0
-            
-            if self.current_path_index >= len(self.paths_to_process):
-                # All paths processed, show completion message
-                print("\nAll orders have been completed!")
-                try:
-                    if self.root.winfo_exists():
-                        self.show_completion_message()
-                except tk.TclError:
-                    print("Window was destroyed during path completion")
-                    return
-            else:
-                # Process next path
-                print(f"\nMoving to next path: {self.current_path_index + 1}")
-                self.process_next_direction()
                 
         except tk.TclError:
             print("Window was destroyed during confirmation")
@@ -1069,6 +1051,24 @@ class MesamateApp:
             "Delivery Confirmed",
             f"Food delivery for Table {table[-1]} has been confirmed.\nThank you for using MESAMATE!"
         )
+        
+        # Move to next path
+        self.current_path_index += 1
+        self.current_direction_index = 0
+        
+        if self.current_path_index >= len(self.paths_to_process):
+            # All paths processed, show completion message
+            print("\nAll orders have been completed!")
+            try:
+                if self.root.winfo_exists():
+                    self.show_completion_message()
+            except tk.TclError:
+                print("Window was destroyed during path completion")
+                return
+        else:
+            # Process next path
+            print(f"\nMoving to next path: {self.current_path_index + 1}")
+            self.process_next_direction()
 
     def handle_not_received(self, window):
         # Send command to Arduino to activate buzzer
