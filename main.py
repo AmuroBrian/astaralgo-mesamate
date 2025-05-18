@@ -853,36 +853,6 @@ class MesamateApp:
             )
             completion_label.pack(pady=(0, 10))
             
-            # Create frame for delivery confirmations
-            delivery_frame = tk.Frame(completion_frame, bg=self.theme_color)
-            delivery_frame.pack(pady=10)
-            
-            # Add delivery confirmation buttons for each table
-            for table in self.selected_tables:
-                table_frame = tk.Frame(delivery_frame, bg=self.theme_color)
-                table_frame.pack(pady=5)
-                
-                # Table label
-                table_label = tk.Label(
-                    table_frame,
-                    text=f"Table {table[-1]}",
-                    font=("Helvetica", 12, "bold"),
-                    bg=self.theme_color,
-                    fg=self.text_color
-                )
-                table_label.pack(side=tk.LEFT, padx=10)
-                
-                # Confirm delivery button
-                confirm_btn = self.create_rounded_button(
-                    table_frame,
-                    "Confirm Delivery",
-                    lambda t=table: self.confirm_delivery(t),
-                    width=15,
-                    height=1,
-                    font_size=10
-                )
-                confirm_btn.pack(side=tk.LEFT, padx=10)
-            
             # OKAY button
             okay_btn_frame = self.create_rounded_button(
                 completion_frame,
