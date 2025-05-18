@@ -120,88 +120,72 @@ class MesamateApp:
                 messagebox.showerror("Communication Error", "Failed to send direction to Arduino")
                 
     def process_next_direction(self):
-        if not self.processing_path and self.current_path_index < len(self.paths_to_process):
-            current_path = self.paths_to_process[self.current_path_index]
-            
-            if not hasattr(self, 'current_direction_index'):
-                self.current_direction_index = 0
-                # Turn ON LED at the start of the path
-                path_number = self.current_path_index + 1
-                if self.serial_port and self.serial_port.is_open:
-                    try:
-                        command = f"PATH_START:{path_number}\n"
-                        print(f"Sending path start command: {command.strip()}")
-                        self.serial_port.write(command.encode())
-                        self.serial_port.flush()
-                        print(f"Sent path start command for Path {path_number}")
-                        time.sleep(0.5)
-                    except Exception as e:
-                        print(f"Error sending path start command: {e}")
+        try:
+            if not self.processing_path and self.current_path_index < len(self.paths_to_process):
+                current_path = self.paths_to_process[self.current_path_index]
                 
-            if self.current_direction_index < len(current_path['directions']):
-                # Get current direction
-                current_direction = current_path['directions'][self.current_direction_index]
-                print(f"\nProcessing Path {self.current_path_index + 1}: {current_path['description']}")
-                print(f"Current direction {self.current_direction_index + 1}/{len(current_path['directions'])}: {current_direction}")
+                if not hasattr(self, 'current_direction_index'):
+                    self.current_direction_index = 0
                 
-                # Send direction to Arduino
-                self.send_direction_to_arduino(current_direction)
-                
-                # Clear the previous path and redraw the base image
-                self.ax.clear()
-                self.ax.imshow(self.binary_array, cmap='gray')
-                
-                # Redraw all station points and labels
-                for station_name, coords in STATIONS.items():
-                    self.ax.scatter(coords[1], coords[0], c='blue', s=100)
-                    self.ax.text(coords[1], coords[0] - 10, f"Table {station_name[-1]}", 
-                                ha='center', va='bottom', color='blue', fontsize=10)
-                
-                # Redraw initial position
-                initial_position = (0, self.binary_array.shape[1] // 2)
-                self.ax.scatter(initial_position[1], initial_position[0], c='green', s=100)
-                self.ax.text(initial_position[1], initial_position[0] - 10, "Initial Position",
-                            ha='center', va='bottom', color='green', fontsize=10)
-                
-                # Draw the current path up to this direction
-                path = current_path['path']
-                path_x = [p[1] for p in path]
-                path_y = [p[0] for p in path]
-                self.ax.plot(path_x, path_y, c='red', linewidth=2)
-                self.canvas.draw()
-                
-                # Move to next direction
-                self.current_direction_index += 1
-                
-            else:
-                # All directions for current path completed
-                path_number = self.current_path_index + 1
-                print(f"\nPath {path_number} completed: {current_path['description']}")
-                
-                # Show food delivery confirmation for current table
-                if self.current_path_index < len(self.selected_tables):
-                    current_table = self.selected_tables[self.current_path_index]
-                    self.show_food_delivery_confirmation(current_table)
+                if self.current_direction_index < len(current_path['directions']):
+                    # Get current direction
+                    current_direction = current_path['directions'][self.current_direction_index]
+                    print(f"\nProcessing Path {self.current_path_index + 1}: {current_path['description']}")
+                    print(f"Current direction {self.current_direction_index + 1}/{len(current_path['directions'])}: {current_direction}")
+                    
+                    # Send direction to Arduino
+                    self.send_direction_to_arduino(current_direction)
+                    
+                    # Clear the previous path and redraw the base image
+                    self.ax.clear()
+                    self.ax.imshow(self.binary_array, cmap='gray')
+                    
+                    # Redraw all station points and labels
+                    for station_name, coords in STATIONS.items():
+                        self.ax.scatter(coords[1], coords[0], c='blue', s=100)
+                        self.ax.text(coords[1], coords[0] - 10, f"Table {station_name[-1]}", 
+                                    ha='center', va='bottom', color='blue', fontsize=10)
+                    
+                    # Redraw initial position
+                    initial_position = (0, self.binary_array.shape[1] // 2)
+                    self.ax.scatter(initial_position[1], initial_position[0], c='green', s=100)
+                    self.ax.text(initial_position[1], initial_position[0] - 10, "Initial Position",
+                                ha='center', va='bottom', color='green', fontsize=10)
+                    
+                    # Draw the current path up to this direction
+                    path = current_path['path']
+                    path_x = [p[1] for p in path]
+                    path_y = [p[0] for p in path]
+                    self.ax.plot(path_x, path_y, c='red', linewidth=2)
+                    self.canvas.draw()
+                    
+                    # Move to next direction
+                    self.current_direction_index += 1
+                    
                 else:
-                    print("Warning: No table selected for current path")
-                
-                self.current_path_index += 1
-                self.current_direction_index = 0
-                
-                if self.current_path_index >= len(self.paths_to_process):
-                    # All paths processed, show completion message
-                    print("\nAll orders have been completed!")
-                    try:
-                        if self.root.winfo_exists():
-                            self.show_completion_message()
-                    except tk.TclError:
-                        print("Window was destroyed during path completion")
-                        return
-                else:
-                    # Process next path
-                    print(f"\nMoving to next path: {self.current_path_index + 1}")
-                    self.process_next_direction()
-            
+                    # All directions for current path completed
+                    path_number = self.current_path_index + 1
+                    print(f"\nPath {path_number} completed: {current_path['description']}")
+                    
+                    # Show food delivery confirmation for current table
+                    if self.current_path_index < len(self.selected_tables):
+                        current_table = self.selected_tables[self.current_path_index]
+                        # Wait for a short delay to ensure the path is visually completed
+                        self.root.after(1000, lambda: self.show_food_delivery_confirmation(current_table))
+                    else:
+                        print("Warning: No table selected for current path")
+                        self.current_path_index += 1
+                        self.current_direction_index = 0
+                        if self.current_path_index < len(self.paths_to_process):
+                            self.process_next_direction()
+                    
+        except tk.TclError:
+            print("Window was destroyed during path processing")
+            return
+        except Exception as e:
+            print(f"Error processing next direction: {e}")
+            return
+
     def create_welcome_screen(self):
         # Clear any existing widgets
         for widget in self.root.winfo_children():
@@ -975,69 +959,106 @@ class MesamateApp:
         self.root.wait_window(popup)
 
     def confirm_delivery(self, table):
-        # Create a new window for food delivery confirmation
-        confirm_window = tk.Toplevel(self.root)
-        confirm_window.title("Food Delivery Confirmation")
-        confirm_window.geometry("400x300")
-        confirm_window.configure(bg=self.theme_color)
-        
-        # Make window modal
-        confirm_window.transient(self.root)
-        confirm_window.grab_set()
-        
-        # Center the window
-        self.center_window(confirm_window)
-        
-        # Create main container
-        main_container = tk.Frame(confirm_window, bg=self.theme_color)
-        main_container.pack(pady=20, padx=20, fill="both", expand=True)
-        
-        # Title
-        title_label = tk.Label(
-            main_container,
-            text="Food Delivery Confirmation",
-            font=("Helvetica", 16, "bold"),
-            bg=self.theme_color,
-            fg=self.text_color
-        )
-        title_label.pack(pady=(0, 20))
-        
-        # Message
-        message_label = tk.Label(
-            main_container,
-            text=f"Has the food been received by the customer at Table {table[-1]}?",
-            font=("Helvetica", 12),
-            bg=self.theme_color,
-            fg=self.text_color,
-            wraplength=350
-        )
-        message_label.pack(pady=10)
-        
-        # Button frame
-        button_frame = tk.Frame(main_container, bg=self.theme_color)
-        button_frame.pack(pady=20)
-        
-        # Yes button
-        yes_btn = self.create_rounded_button(
-            button_frame,
-            "Yes, Received",
-            lambda: self.handle_food_received(table, confirm_window),
-            width=15,
-            height=1,
-            font_size=12
-        )
-        yes_btn.pack(side=tk.LEFT, padx=10)
-        
-        # No button
-        no_btn = self.create_rounded_button(
-            button_frame,
-            "No, Not Yet",
-            lambda: self.handle_not_received(confirm_window),
-            width=15,
-            height=1,
-            font_size=12
-        )
-        no_btn.pack(side=tk.LEFT, padx=10)
+        try:
+            # Check if root window still exists
+            try:
+                if not self.root.winfo_exists():
+                    return
+            except tk.TclError:
+                print("Window was destroyed before showing confirmation")
+                return
+
+            # Create a new window for food delivery confirmation
+            confirm_window = tk.Toplevel(self.root)
+            confirm_window.title("Food Delivery Confirmation")
+            confirm_window.geometry("400x300")
+            confirm_window.configure(bg=self.theme_color)
+            
+            # Make window modal
+            confirm_window.transient(self.root)
+            confirm_window.grab_set()
+            
+            # Center the window
+            self.center_window(confirm_window)
+            
+            # Create main container
+            main_container = tk.Frame(confirm_window, bg=self.theme_color)
+            main_container.pack(pady=20, padx=20, fill="both", expand=True)
+            
+            # Title
+            title_label = tk.Label(
+                main_container,
+                text="Food Delivery Confirmation",
+                font=("Helvetica", 16, "bold"),
+                bg=self.theme_color,
+                fg=self.text_color
+            )
+            title_label.pack(pady=(0, 20))
+            
+            # Message
+            message_label = tk.Label(
+                main_container,
+                text=f"Has the food been received by the customer at Table {table[-1]}?",
+                font=("Helvetica", 12),
+                bg=self.theme_color,
+                fg=self.text_color,
+                wraplength=350
+            )
+            message_label.pack(pady=10)
+            
+            # Button frame
+            button_frame = tk.Frame(main_container, bg=self.theme_color)
+            button_frame.pack(pady=20)
+            
+            # Yes button
+            yes_btn = self.create_rounded_button(
+                button_frame,
+                "Yes, Received",
+                lambda: self.handle_food_received(table, confirm_window),
+                width=15,
+                height=1,
+                font_size=12
+            )
+            yes_btn.pack(side=tk.LEFT, padx=10)
+            
+            # No button
+            no_btn = self.create_rounded_button(
+                button_frame,
+                "No, Not Yet",
+                lambda: self.handle_not_received(confirm_window),
+                width=15,
+                height=1,
+                font_size=12
+            )
+            no_btn.pack(side=tk.LEFT, padx=10)
+            
+            # Wait for window to be closed
+            self.root.wait_window(confirm_window)
+            
+            # After confirmation window is closed, move to next path
+            self.current_path_index += 1
+            self.current_direction_index = 0
+            
+            if self.current_path_index >= len(self.paths_to_process):
+                # All paths processed, show completion message
+                print("\nAll orders have been completed!")
+                try:
+                    if self.root.winfo_exists():
+                        self.show_completion_message()
+                except tk.TclError:
+                    print("Window was destroyed during path completion")
+                    return
+            else:
+                # Process next path
+                print(f"\nMoving to next path: {self.current_path_index + 1}")
+                self.process_next_direction()
+                
+        except tk.TclError:
+            print("Window was destroyed during confirmation")
+            return
+        except Exception as e:
+            print(f"Error showing food delivery confirmation: {e}")
+            return
 
     def handle_food_received(self, table, window):
         # Send command to Arduino to turn off LED and turn on next LED
@@ -1140,74 +1161,6 @@ class MesamateApp:
             except Exception as e:
                 print(f"Error sending LED test command: {e}")
                 messagebox.showerror("Error", "Failed to send LED test command")
-
-    def show_food_delivery_confirmation(self, table):
-        # Create a new window for food delivery confirmation
-        confirm_window = tk.Toplevel(self.root)
-        confirm_window.title("Food Delivery Confirmation")
-        confirm_window.geometry("400x300")
-        confirm_window.configure(bg=self.theme_color)
-        
-        # Make window modal
-        confirm_window.transient(self.root)
-        confirm_window.grab_set()
-        
-        # Center the window
-        self.center_window(confirm_window)
-        
-        # Create main container
-        main_container = tk.Frame(confirm_window, bg=self.theme_color)
-        main_container.pack(pady=20, padx=20, fill="both", expand=True)
-        
-        # Title
-        title_label = tk.Label(
-            main_container,
-            text="Food Delivery Confirmation",
-            font=("Helvetica", 16, "bold"),
-            bg=self.theme_color,
-            fg=self.text_color
-        )
-        title_label.pack(pady=(0, 20))
-        
-        # Message
-        message_label = tk.Label(
-            main_container,
-            text=f"Has the food been received by the customer at Table {table[-1]}?",
-            font=("Helvetica", 12),
-            bg=self.theme_color,
-            fg=self.text_color,
-            wraplength=350
-        )
-        message_label.pack(pady=10)
-        
-        # Button frame
-        button_frame = tk.Frame(main_container, bg=self.theme_color)
-        button_frame.pack(pady=20)
-        
-        # Yes button
-        yes_btn = self.create_rounded_button(
-            button_frame,
-            "Yes, Received",
-            lambda: self.handle_food_received(table, confirm_window),
-            width=15,
-            height=1,
-            font_size=12
-        )
-        yes_btn.pack(side=tk.LEFT, padx=10)
-        
-        # No button
-        no_btn = self.create_rounded_button(
-            button_frame,
-            "No, Not Yet",
-            lambda: self.handle_not_received(confirm_window),
-            width=15,
-            height=1,
-            font_size=12
-        )
-        no_btn.pack(side=tk.LEFT, padx=10)
-        
-        # Wait for window to be closed
-        self.root.wait_window(confirm_window)
 
 def main():
     root = tk.Tk()
