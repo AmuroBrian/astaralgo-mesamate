@@ -919,7 +919,7 @@ class MesamateApp:
         okay_btn = self.create_rounded_button(
             main_container,
             "OKAY",
-            lambda: [popup.destroy(), self.show_table_selection(None)],
+            lambda: [popup.destroy(), self.reset_and_return_to_welcome()],
             width=15,
             height=2,
             font_size=14,
@@ -1037,7 +1037,8 @@ class MesamateApp:
                 print("\nAll orders have been completed!")
                 try:
                     if self.root.winfo_exists():
-                        self.show_completion_message()
+                        # Add a small delay before showing completion message
+                        self.root.after(1000, self.show_completion_message)
                 except tk.TclError:
                     print("Window was destroyed during path completion")
                     return
@@ -1084,7 +1085,8 @@ class MesamateApp:
                 print("\nAll orders have been completed!")
                 try:
                     if self.root.winfo_exists():
-                        self.show_completion_message()
+                        # Add a small delay before showing completion message
+                        self.root.after(1000, self.show_completion_message)
                 except tk.TclError:
                     print("Window was destroyed during path completion")
                     return
