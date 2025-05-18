@@ -171,7 +171,7 @@ class MesamateApp:
                     if self.current_path_index < len(self.selected_tables):
                         current_table = self.selected_tables[self.current_path_index]
                         # Wait for a short delay to ensure the path is visually completed
-                        self.root.after(1000, lambda: self.show_food_delivery_confirmation(current_table))
+                        self.root.after(1000, lambda: self.confirm_delivery(current_table))
                     else:
                         print("Warning: No table selected for current path")
                         self.current_path_index += 1
