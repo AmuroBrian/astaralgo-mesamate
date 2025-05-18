@@ -1061,42 +1061,6 @@ class MesamateApp:
             return
 
     def handle_food_received(self, table, window):
-        # Send command to Arduino to turn off LED and turn on next LED
-        if self.serial_port and self.serial_port.is_open:
-            try:
-                # Find the path number for this table
-                path_number = self.selected_tables.index(table) + 1
-                # Turn off current LED
-                command = f"FOOD_RECEIVED:{path_number}\n"
-                print(f"Sending food received command: {command.strip()}")
-                self.serial_port.write(command.encode())
-                self.serial_port.flush()
-                print(f"Sent food received command for Path {path_number}")
-                
-                # Wait for acknowledgment
-                time.sleep(0.5)
-                
-                # If there's a next path, turn on its LED
-                next_path = path_number + 1
-                if next_path <= len(self.selected_tables):
-                    command = f"PATH_START:{next_path}\n"
-                    print(f"Sending path start command for next path: {command.strip()}")
-                    self.serial_port.write(command.encode())
-                    self.serial_port.flush()
-                    print(f"Sent path start command for Path {next_path}")
-                    time.sleep(0.5)
-                elif path_number == 3:  # If this was the last path (Path 3)
-                    # Turn on all LEDs for Path 4
-                    command = "PATH_START:4\n"
-                    print("Sending path start command for Path 4 - Turning ON all LEDs")
-                    self.serial_port.write(command.encode())
-                    self.serial_port.flush()
-                    print("Sent path start command for Path 4")
-                    time.sleep(0.5)
-                
-            except Exception as e:
-                print(f"Error sending LED control commands: {e}")
-        
         # Close the confirmation window
         window.destroy()
         
